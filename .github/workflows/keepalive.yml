@@ -1,0 +1,30 @@
+name: Keep Supabase awake
+
+# Supabase's free tier pauses a project after 7 days with no API activity.
+# This just touches the REST API every few days so the project never goes
+# to sleep — no data changes, one cheap read.
+#
+# Needs SUPABASE_URL and SUPABASE_ANON_KEY set as repo variables (Settings →
+# Secrets and variables → Actions → Variables). The anon key is meant to be
+# public, so a plain variable is fine — no need for a secret here.
+
+on:
+  schedule:
+    - cron: '0 6 */3 * *'   # every 3 days, well under the 7-day pause window
+  workflow_dispatch: {}      # lets you trigger it manually to check it works
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase REST API
+        run: |
+          if [ -z "${{ vars.SUPABASE_URL }}" ] || [ -z "${{ vars.SUPABASE_ANON_KEY }}" ]; then
+            echo "SUPABASE_URL / SUPABASE_ANON_KEY repo variables aren't set yet — skipping." >&2
+            exit 0
+          fi
+          # `progress` is RLS-protected, so anon gets an empty array back —
+          # a 200 either way, which is all a keep-alive needs.
+          curl -sf -o /dev/null -w "HTTP %{http_code}\n" \
+            "${{ vars.SUPABASE_URL }}/rest/v1/progress?select=user_id&limit=1" \
+            -H "apikey: ${{ vars.SUPABASE_ANON_KEY }}"
