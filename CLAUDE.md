@@ -167,6 +167,15 @@ this app needs nothing Cloudflare-specific.)
 The app uses relative asset paths, so it runs fine under the `/one-piece-tracker/`
 subpath.
 
+**Cache-busting (important):** GitHub Pages serves assets with a ~10-minute
+cache. `index.html` loads `app.js?v=N` — **bump that `N` in `index.html`
+whenever you change `app.js`.** Without it, a browser can pick up a fresh
+`index.html` but a stale cached `app.js` (or vice-versa), and the two disagree
+about the DOM — e.g. an old `app.js` calling `getElementById` for an element a
+new `index.html` renamed. Versioning the query means you always get a matched
+pair: all-new or all-old, never mixed. (If `config.js` ever changes, bump its
+import query in `app.js` the same way.)
+
 ### Storage — Supabase, localStorage as the offline cache
 
 `window.storage` (Claude-artifact-only) is gone. `persist()`/`restore()` in
