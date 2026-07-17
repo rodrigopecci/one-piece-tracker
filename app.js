@@ -18,7 +18,7 @@ const supabase = supabaseConfigured
    ============================================================ */
 const W = 4000, H = 2400;
 const GL_Y = 1200, GL_HALF = 105, BELT = 210;
-const RL_A = 1000, RL_B = 3000, RL_HALF = 58;
+const RL_A = 1000, RL_B = 3000, RL_HALF = 72;
 
 /* The chart is a stack of horizontal zones, and every island belongs to
    exactly one of them:
@@ -471,6 +471,10 @@ const TILES = [-W, 0, W];
 /* full-width background bands only need to span the visible range across all
    three tiles, not be tiled themselves */
 const BG_X0 = -W - 400, BG_X1 = 2*W + 400, BG_W = BG_X1 - BG_X0;
+/* vertical extent for the grid + Red Line: generous enough that at full
+   zoom-out they still reach top and bottom of any viewport, including tall
+   portrait phones (where the view can be much taller than the world). */
+const BG_Y0 = -1200, BG_Y1 = H + 6000;
 
 /* faint swell across the open sea — gentle horizontal waves, behind the grid
    and the Grand Line band, so they only read in the open Blues */
@@ -489,8 +493,8 @@ for (let i=0;i<18;i++){
 }
 
 const grat = document.getElementById('graticule');
-for (let x=BG_X0;x<=BG_X1;x+=125) grat.appendChild(el('line',{x1:x,y1:-400,x2:x,y2:H+400,stroke:'var(--grid)','stroke-width':.7,opacity:(((x%W)+W)%W%500===0?.3:.1)}));
-for (let y=-400;y<=H+400;y+=125) grat.appendChild(el('line',{x1:BG_X0,y1:y,x2:BG_X1,y2:y,stroke:'var(--grid)','stroke-width':.7,opacity:(y%500===0?.3:.1)}));
+for (let x=BG_X0;x<=BG_X1;x+=125) grat.appendChild(el('line',{x1:x,y1:BG_Y0,x2:x,y2:BG_Y1,stroke:'var(--grid)','stroke-width':.7,opacity:(((x%W)+W)%W%500===0?.3:.1)}));
+for (let y=BG_Y0;y<=BG_Y1;y+=125) grat.appendChild(el('line',{x1:BG_X0,y1:y,x2:BG_X1,y2:y,stroke:'var(--grid)','stroke-width':.7,opacity:(y%500===0?.3:.1)}));
 
 const belts = document.getElementById('belts');
 [GL_Y-GL_HALF-BELT, GL_Y+GL_HALF].forEach(y => {
@@ -526,7 +530,7 @@ for (let x=BG_X0+100;x<BG_X1;x+=260){
    reads as lit rock, texture, and a jagged ridge line down the spine.
    The coastline is a deterministic function of y, so all three tiles match. */
 const lines = document.getElementById('lines');
-const RL_TOP = -400, RL_BOT = H + 400, RL_STEP = 24;
+const RL_TOP = BG_Y0, RL_BOT = BG_Y1, RL_STEP = 40;
 const coast = (y, seed) => 11*Math.sin(y/71 + seed) + 6*Math.sin(y/29 + seed*2.3) + 3*Math.sin(y/13 + seed);
 function redBandPath(x){
   let d = '';
