@@ -510,13 +510,11 @@ const belts = document.getElementById('belts');
 });
 
 const glband = document.getElementById('glband');
-/* luminous corridor: a soft glow bleeding past the banks, the shallow band,
-   then flowing current streamlines threaded down the channel */
+/* luminous corridor: a soft glow bleeding past the banks, then the shallow
+   band. The directional chevrons below carry the sense of current on their
+   own — extra streamlines just clashed with them. */
 glband.appendChild(el('rect',{x:BG_X0,y:GL_Y-GL_HALF-46,width:BG_W,height:GL_HALF*2+92,fill:'url(#glGlow)'}));
 glband.appendChild(el('rect',{x:BG_X0,y:GL_Y-GL_HALF,width:BG_W,height:GL_HALF*2,fill:'var(--sea-shallow)',opacity:.42}));
-[-58,-24,24,58].forEach((off,i) => glband.appendChild(el('path',{
-  d:wavePath(GL_Y+off, 11, 300, i*2.1), fill:'none', stroke:'#9FD4E4','stroke-width':1.3,
-  opacity:.16, 'stroke-dasharray':'34 26', 'stroke-linecap':'round'})));
 [-1,1].forEach(s => glband.appendChild(el('line',{x1:BG_X0,y1:GL_Y+s*GL_HALF,x2:BG_X1,y2:GL_Y+s*GL_HALF,stroke:'#EFE6D2','stroke-width':2,opacity:.4})));
 glband.appendChild(el('line',{x1:BG_X0,y1:GL_Y,x2:BG_X1,y2:GL_Y,stroke:'#EFE6D2','stroke-width':1,opacity:.5,'stroke-dasharray':'26 18'}));
 const nearRedLine = x => [RL_A,RL_B].some(rl => TILES.some(dx => Math.abs(x-(rl+dx))<90));
@@ -898,6 +896,11 @@ SVG.addEventListener('dblclick', e => {
 
 const ptrs = new Map(); let pinch = null;
 let lastTap = 0, lastTapXY = [0,0];
+/* Capture the pointer only ONCE a real drag begins (past a few px). Capturing
+   on pointerdown would swallow the click event on an island, so a single tap
+   would never open its details — which is exactly what was happening. */
+let downXY = null, dragging = false;
+const capture = id => { try { SVG.setPointerCapture(id); } catch { /* pointer already gone */ } };
 SVG.addEventListener('pointerup', e => {
   if (e.pointerType === 'mouse') return;          // the mouse goes through dblclick
   if (!onWater(e.target)) return;
@@ -907,10 +910,13 @@ SVG.addEventListener('pointerup', e => {
   else { lastTap = now; lastTapXY = [e.clientX, e.clientY]; }
 });
 SVG.addEventListener('pointerdown', e => {
-  SVG.setPointerCapture(e.pointerId);
   ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
-  if (ptrs.size===1) SVG.classList.add('dragging');
-  if (ptrs.size===2){ const [a,b]=[...ptrs.values()]; pinch={d:Math.hypot(a.x-b.x,a.y-b.y),w:view.w}; }
+  if (ptrs.size===1){ downXY = {x:e.clientX, y:e.clientY}; dragging = false; }
+  if (ptrs.size===2){                              // two fingers: a pinch, capture right away
+    capture(e.pointerId);
+    SVG.classList.add('dragging');
+    const [a,b]=[...ptrs.values()]; pinch={d:Math.hypot(a.x-b.x,a.y-b.y),w:view.w};
+  }
 });
 SVG.addEventListener('pointermove', e => {
   if (!ptrs.has(e.pointerId)) return;
@@ -927,6 +933,12 @@ SVG.addEventListener('pointermove', e => {
     }
     return;
   }
+  if (!dragging){                                  // start panning only after moving a little
+    if (!downXY || Math.hypot(e.clientX-downXY.x, e.clientY-downXY.y) < 5) return;
+    dragging = true;
+    capture(e.pointerId);
+    SVG.classList.add('dragging');
+  }
   view.x -= (e.clientX-prev.x)/r.width*view.w;
   view.y -= (e.clientY-prev.y)/r.height*view.h;
   ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
@@ -935,7 +947,7 @@ SVG.addEventListener('pointermove', e => {
 ['pointerup','pointercancel','pointerleave'].forEach(ev => SVG.addEventListener(ev, e => {
   ptrs.delete(e.pointerId);
   if (ptrs.size<2) pinch=null;
-  if (ptrs.size===0) SVG.classList.remove('dragging');
+  if (ptrs.size===0){ SVG.classList.remove('dragging'); dragging = false; downXY = null; }
 }));
 SVG.addEventListener('keydown', e => {
   const s = view.w*.08;
@@ -1150,9 +1162,21 @@ function renderAnchorage(id){
   if (!stop || isShielded(id)){ box.style.display='none'; return; }
   box.style.display='';
   const isHere = id === positionIsland();
+
+  /* The sailor count is only meaningful (and only shown) when you've opted
+     into a public profile — with it off, hide the number rather than flash a
+     figure you can't act on. */
+  if (!state.settings.public){
+    box.innerHTML = `<div class="hd"><b>Who else is here?</b></div>
+      <p class="locked">Turn on a public profile to see how many sailors are at this island — and meet the ones on your exact ${unitWord()}.</p>
+      <button class="cta" id="goPublic">Make my profile public</button>`;
+    document.getElementById('goPublic').onclick = () => openModal('settingsModal');
+    return;
+  }
+
   let html = `<div class="hd"><b>${sailorsAt(id).toLocaleString()} sailors</b>
     <span>${isHere ? 'anchored with you' : 'are here'}</span></div>`;
-  if (state.settings.public && state.settings.crew){
+  if (state.settings.crew){
     sailorSample(id, 3).forEach(s => {
       html += `<div class="who"><span class="d">${s.name[0].toUpperCase()}</span>
         <span class="t">${s.name}</span>
@@ -1160,8 +1184,7 @@ function renderAnchorage(id){
     });
     html += `<button class="cta" id="tavern">Open the tavern</button>`;
   } else {
-    html += `<p class="locked">Turn on a public profile to see who they are — and to talk to the ones on your exact ${unitWord()}.</p>
-      <button class="cta" id="goPublic">Make my profile public</button>`;
+    html += `<p class="locked">Turn on “Find sailors at my island” to see who they are and talk to the ones on your exact ${unitWord()}.</p>`;
   }
   box.innerHTML = html;
   const t = document.getElementById('tavern');
