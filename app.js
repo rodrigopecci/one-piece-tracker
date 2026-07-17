@@ -1517,7 +1517,7 @@ function renderAcct(){
     acctMenu.append(s,o);
   } else {
     const i = document.createElement('button'); i.textContent='Sign in';
-    i.onclick = () => { closeAcct(); openModal('signinModal'); };
+    i.onclick = () => { closeAcct(); authMode='signin'; renderAuthMode(); openModal('signinModal'); };
     const s = document.createElement('button'); s.textContent='Settings';
     s.onclick = () => { closeAcct(); openModal('settingsModal'); };
     acctMenu.append(i,s);
@@ -1542,23 +1542,67 @@ document.addEventListener('keydown', e => {
     if (book.classList.contains('open')) setBook(false);
   }
 });
-document.querySelectorAll('.prov').forEach(b => b.onclick = async () => {
-  const provider = b.dataset.prov;
-  /* Google/Facebook go through real Supabase auth when it's configured — the
-     browser redirects away and back; onAuthStateChange (see PERSISTENCE)
-     picks up the session on return. Everything else — Apple, Discord, or
-     any provider when Supabase isn't set up yet — stays the original mock
-     flow, so sign-in always does *something* usable. */
-  if (supabase && (provider === 'Google' || provider === 'Facebook')){
-    const { error } = await supabase.auth.signInWithOAuth({ provider: provider.toLowerCase() });
-    if (error) toast(`Couldn't reach ${provider} — try again`);
-    return;
+/* ---- email + password sign-in / sign-up ----
+   Our own form; Supabase handles the actual credentials (hashing, sessions,
+   resets) — we never store or hash passwords ourselves. onAuthStateChange
+   (see PERSISTENCE) picks the session up and merges progress on SIGNED_IN. */
+const authForm = document.getElementById('authForm');
+const siEmail = document.getElementById('siEmail'), siPass = document.getElementById('siPass');
+const siSubmit = document.getElementById('siSubmit'), siErr = document.getElementById('siErr');
+const siTitle = document.getElementById('siTitle'), siSub = document.getElementById('siSub');
+const siSwapText = document.getElementById('siSwapText'), siToggle = document.getElementById('siToggle');
+const siNote = document.getElementById('siNote');
+let authMode = 'signin';                            // 'signin' | 'signup'
+
+function showAuthError(msg){ siErr.textContent = msg; siErr.classList.toggle('show', !!msg); }
+
+function renderAuthMode(){
+  const up = authMode === 'signup';
+  siTitle.textContent = up ? 'Create your account' : 'Sign on to the crew';
+  siSubmit.textContent = up ? 'Create account' : 'Sign in';
+  siSwapText.textContent = up ? 'Already have an account?' : 'New to the crew?';
+  siToggle.textContent = up ? 'Sign in' : 'Create an account';
+  siPass.setAttribute('autocomplete', up ? 'new-password' : 'current-password');
+  showAuthError('');
+  siNote.textContent = supabase ? '' : 'Sign-in isn’t available yet — the app’s backend isn’t configured. Your progress is still saved on this device.';
+  siSubmit.disabled = !supabase;
+}
+siToggle.onclick = () => { authMode = authMode === 'signin' ? 'signup' : 'signin'; renderAuthMode(); };
+
+authForm.addEventListener('submit', async e => {
+  e.preventDefault();
+  showAuthError('');
+  if (!supabase){ showAuthError('Sign-in isn’t configured yet.'); return; }
+  const email = siEmail.value.trim(), password = siPass.value;
+  if (!email || password.length < 6){ showAuthError('Enter an email and a password of at least 6 characters.'); return; }
+
+  siSubmit.disabled = true;
+  const prev = siSubmit.textContent;
+  siSubmit.textContent = authMode === 'signup' ? 'Creating…' : 'Signing in…';
+  try {
+    if (authMode === 'signup'){
+      const { data, error } = await supabase.auth.signUp({ email, password });
+      if (error) throw error;
+      if (!data.session){
+        // email-confirmation is on: no session yet, user must confirm first
+        authMode = 'signin'; renderAuthMode();
+        siNote.textContent = 'Check your email to confirm your account, then sign in.';
+        return;
+      }
+      // confirmation off → signed straight in; onAuthStateChange takes it from here
+    } else {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+    }
+    authForm.reset();
+    closeModal('signinModal');
+    toast(authMode === 'signup' ? 'Welcome aboard' : 'Signed in');
+  } catch (err){
+    showAuthError(err?.message || 'Something went wrong — try again.');
+  } finally {
+    siSubmit.disabled = !supabase;
+    siSubmit.textContent = prev;
   }
-  const typed = document.getElementById('siName').value.trim();
-  state.user = {name: typed || 'Navigator', provider};
-  persist(); renderAcct(); renderSettings();
-  closeModal('signinModal');
-  toast(`Signed in with ${provider} (mock)`);
 });
 
 const sPublic=document.getElementById('sPublic'), sCrew=document.getElementById('sCrew');
@@ -1762,10 +1806,11 @@ function setupAuth(){
   supabase.auth.onAuthStateChange((event, session) => {
     if (session?.user){
       const meta = session.user.user_metadata || {};
+      const email = session.user.email || '';
       state.user = {
         id: session.user.id,
-        name: meta.full_name || meta.name || session.user.email || 'Navigator',
-        provider: session.user.app_metadata?.provider || 'unknown',
+        name: meta.full_name || meta.name || email.split('@')[0] || 'Navigator',
+        provider: session.user.app_metadata?.provider || 'email',
       };
       renderAcct(); renderSettings();
       if (event === 'SIGNED_IN') pullAndMerge().then(() => { renderBook(); renderCrew(); draw(); });
@@ -1795,7 +1840,7 @@ window.addEventListener('resize', () => { clampView(); draw(); });
   setupAuth();
   mAnime.setAttribute('aria-pressed', String(state.medium==='anime'));
   mManga.setAttribute('aria-pressed', String(state.medium==='manga'));
-  rebuildStops(); buildRoute(); renderAcct(); renderSettings(); renderCrew(); renderQuickLog();
+  rebuildStops(); buildRoute(); renderAcct(); renderSettings(); renderCrew(); renderQuickLog(); renderAuthMode();
   requestAnimationFrame(() => {
     for (const id in nodes){
       const {lbl} = nodes[id];

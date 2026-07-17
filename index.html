@@ -85,8 +85,18 @@
     color:var(--brass);margin-bottom:7px;}
   .namefield input{width:100%;background:rgba(233,220,192,.06);border:1px solid rgba(211,160,60,.3);
     color:var(--paper);font-family:var(--body);font-size:14px;padding:9px 11px;border-radius:2px;outline:none;}
+  .namefield input:focus{border-color:var(--brass);}
+  #authForm .sailbtn{margin-top:16px;margin-bottom:0;}
+  .autherr{display:none;font-family:var(--mono);font-size:11px;line-height:1.5;color:#F0A99C;
+    background:rgba(224,80,63,.1);border:1px solid rgba(224,80,63,.32);border-radius:2px;
+    padding:8px 10px;margin:14px 0 0;}
+  .autherr.show{display:block;}
+  .authswap{text-align:center;font-size:12.5px;color:rgba(239,230,210,.6);margin:16px 0 0;}
+  .authswap button{background:none;border:0;color:var(--brass-lite);font-family:var(--body);font-size:12.5px;
+    cursor:pointer;text-decoration:underline;padding:0 0 0 4px;}
   .mocknote{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;
     color:rgba(239,230,210,.35);text-align:center;margin-top:14px;}
+  .mocknote:empty{display:none;}
   .setting{display:flex;align-items:flex-start;gap:13px;padding:14px 0;border-top:1px solid rgba(211,160,60,.16);}
   .setting:first-of-type{border-top:0;}
   .setting .txt{flex:1;min-width:0;}
@@ -527,14 +537,20 @@
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="siTitle">
     <button class="x" data-close aria-label="Close">✕</button>
     <h3 id="siTitle">Sign on to the crew</h3>
-    <p class="sub">Keep your voyage across devices — and, later, find the sailors who are exactly where you are.</p>
-    <button class="prov" data-prov="Google"><span class="g" style="background:#fff;color:#4285F4">G</span> Continue with Google</button>
-    <button class="prov" data-prov="Facebook"><span class="g" style="background:#1877F2;color:#fff">f</span> Continue with Facebook</button>
-    <button class="prov" data-prov="Apple"><span class="g" style="background:#fff;color:#000"></span> Continue with Apple</button>
-    <button class="prov" data-prov="Discord"><span class="g" style="background:#5865F2;color:#fff">D</span> Continue with Discord</button>
-    <div class="namefield"><label for="siName">Name on the manifest</label>
-      <input id="siName" type="text" placeholder="Navigator" maxlength="24" /></div>
-    <p class="mocknote">Mock sign-in — nothing leaves this device</p>
+    <p class="sub" id="siSub">Keep your voyage across devices. Your progress is saved on this device either way — signing in just syncs it.</p>
+    <form id="authForm" novalidate>
+      <div class="namefield"><label for="siEmail">Email</label>
+        <input id="siEmail" type="email" autocomplete="email" placeholder="you@example.com" required /></div>
+      <div class="namefield"><label for="siPass">Password</label>
+        <input id="siPass" type="password" autocomplete="current-password" placeholder="At least 6 characters" minlength="6" required /></div>
+      <p class="autherr" id="siErr" role="alert"></p>
+      <button class="sailbtn" id="siSubmit" type="submit">Sign in</button>
+    </form>
+    <p class="authswap">
+      <span id="siSwapText">New to the crew?</span>
+      <button type="button" id="siToggle">Create an account</button>
+    </p>
+    <p class="mocknote" id="siNote"></p>
   </div>
 </div>
 

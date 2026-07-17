@@ -157,8 +157,15 @@ the Log Pose reads "Nowhere left to sail" rather than inventing a heading.
 
 ## Deploy
 
-**Cloudflare Pages.** Free, no card, unlimited bandwidth, 500 builds/month.
-Point it at this repo; `index.html` at the root is the whole site.
+**GitHub Pages**, served from `main` at root — the app is static, no build
+step. Repo: `github.com/rodrigopecci/one-piece-tracker` (personal account,
+public). Live at `https://rodrigopecci.github.io/one-piece-tracker/`. Every
+push to `main` redeploys automatically. (Cloudflare Pages would also work and
+was the original plan, but GitHub Pages keeps everything on one platform and
+this app needs nothing Cloudflare-specific.)
+
+The app uses relative asset paths, so it runs fine under the `/one-piece-tracker/`
+subpath.
 
 ### Storage — Supabase, localStorage as the offline cache
 
@@ -167,21 +174,20 @@ Point it at this repo; `index.html` at the root is the whole site.
 so a dead network never blocks using the app. Supabase is layered on top as
 the backup + cross-device sync, only active once a project is configured.
 
-**One-time setup (not done by the assistant — needs your Supabase/Google/
-Facebook dashboards):**
+**One-time setup (needs your Supabase dashboard — that's the only account
+required now):**
 1. Create a free project at supabase.com. Run `supabase/schema.sql` in its
    SQL editor — it creates one table, `progress`.
-2. Authentication → Providers: enable Google and Facebook (each needs an
-   OAuth app registered in Google Cloud Console / Meta for Developers).
-3. Authentication → URL Configuration: allow `http://localhost:8000` and the
-   deployed URL.
-4. Put the Project URL + anon key in `config.js` (both are public-safe).
+2. Authentication → Providers: **Email** is enabled by default — that's all
+   we use. (Optionally toggle off "Confirm email" for instant signup.)
+3. Put the Project URL + anon key in `config.js` (both are public-safe) and
+   push — Pages redeploys.
 
 All of this is **optional**. Without it, the whole app works on
 localStorage alone — the map, Log Book, and progress all render; only sign-in
-and cross-device sync are off, and the sign-in buttons no-op gracefully.
-There is no service_role key and no server-side script anywhere: the database
-never holds reference data, only user progress.
+and cross-device sync are off, and the sign-in form shows a graceful
+"not configured" note. There is no service_role key and no server-side script
+anywhere: the database never holds reference data, only user progress.
 
 ### Sync design (implemented)
 
@@ -204,12 +210,15 @@ Offline-first: `localStorage` is the working copy, Supabase is the backup —
 writes to it are debounced and best-effort (`pushRemote()`), never blocking.
 Anonymous users get the full app with no login.
 
-Auth: Google/Facebook via Supabase Auth (`signInWithOAuth`) — Apple/Discord
-stay the original mock flow, since only Google/Facebook were wanted and only
-those two need real dashboard setup. Supabase's free tier **pauses after 7
-days of inactivity**, so `.github/workflows/keepalive.yml` pings it every 3
-days — activates once this repo is on GitHub with `SUPABASE_URL`/
-`SUPABASE_ANON_KEY` set as repo variables.
+Auth: **email + password** via Supabase Auth (`signUp` /
+`signInWithPassword` / `signOut`). Our own form (`#authForm` in the sign-in
+modal, wired in `app.js`); Supabase owns the actual credentials — hashing,
+sessions, resets — we never store or hash passwords ourselves. No OAuth,
+no Google/Meta apps (deliberately dropped for simplicity). The form degrades
+to a disabled "not configured" state when `config.js` still has placeholders.
+Supabase's free tier **pauses after 7 days of inactivity**, so
+`.github/workflows/keepalive.yml` pings it every 3 days — activates once
+`SUPABASE_URL`/`SUPABASE_ANON_KEY` are set as GitHub repo variables.
 
 ---
 
@@ -265,20 +274,20 @@ databases into the repo. See the Data section for why.
 - [x] Swap `window.storage` → `localStorage` + Supabase (sync layer)
 - [x] Episode/chapter/arc data as the `ARCS` constant in `app.js`, updated by
       hand as episodes/chapters release (guardrails assert it at load)
-- [x] Auth + sync (Google/Facebook via Supabase, merge-by-union) — code done,
-      needs you to provision the Supabase project + OAuth apps (see Storage above)
+- [x] Auth + sync (email/password via Supabase, merge-by-union) — code done;
+      needs you to create the Supabase project + fill `config.js` (see Storage)
 - [x] Quick-log "Next up" card — one-click marking without opening anything
 - [x] Infinite wrap-around pan (the cylinder actually pans round now)
-- [ ] Richer map — deferred, needs a design pass. Must stay a **hydrographic
-      chart**, not an illustrated map (op-maps.com is the opposite aesthetic).
-      Candidates within the style: a wake trail on the sailed route, compass
-      rose + graticule labels, current-flow lines, per-type island glyphs.
-- [ ] Optional: email/magic-link auth so sync is testable without registering
-      Google/Facebook OAuth apps first
-- [ ] Titles — deliberately out (no clean API); numbers-only is the landing spot
+- [x] Map beautification within the chart identity (Red Line mountain wall,
+      glowing Grand Line, domed islands) — see Style
+- [x] `git init` + push to GitHub, GitHub Pages enabled (serves main/root)
+- [ ] Fill `config.js` with real Supabase URL + anon key to turn on auth/sync
+- [ ] Set `SUPABASE_URL`/`SUPABASE_ANON_KEY` as repo variables for the keep-alive cron
+- [ ] Richer map (more) — deferred, needs a design pass. Must stay a
+      **hydrographic chart**, not an illustrated map. Candidates: a wake trail
+      on the sailed route, compass rose + graticule labels, current-flow lines.
+- [ ] Titles — deliberately out for now (owner's call)
 - [ ] Curated island images (frame was removed; add back with real assets)
-- [ ] `git init` + push to GitHub, Cloudflare Pages deploy (also activates the
-      keep-alive cron)
 - [ ] Bounty
 
 ---
