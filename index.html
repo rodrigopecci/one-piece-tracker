@@ -112,7 +112,10 @@
   .dangerbtn{width:100%;background:none;border:1px solid rgba(224,80,63,.5);color:#F0A99C;font-family:var(--mono);
     font-size:10px;letter-spacing:.14em;text-transform:uppercase;padding:10px;border-radius:2px;cursor:pointer;margin-top:18px;}
 
-  /* crew roster */
+  /* crew roster — a single cumulative portrait of who's aboard */
+  .crew-sheet{max-width:600px;}
+  .crewimg{display:block;width:100%;height:auto;max-height:64dvh;object-fit:contain;
+    border-radius:3px;border:1px solid rgba(211,160,60,.28);background:rgba(8,32,45,.5);}
   .crewgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
   .cm{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid rgba(211,160,60,.22);
     border-radius:2px;background:rgba(233,220,192,.03);}
@@ -553,11 +556,11 @@
 
 <div class="modal" id="crewModal">
   <div class="back" data-close></div>
-  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="crTitle">
+  <div class="sheet crew-sheet" role="dialog" aria-modal="true" aria-labelledby="crTitle">
     <button class="x" data-close aria-label="Close">✕</button>
     <h3 id="crTitle">Your crew</h3>
     <p class="sub" id="crSub">They sign on as you sail. Finish the arc, gain the shipmate.</p>
-    <div class="crewgrid" id="crewGrid"></div>
+    <img class="crewimg" id="crewImg" alt="Your crew" />
   </div>
 </div>
 

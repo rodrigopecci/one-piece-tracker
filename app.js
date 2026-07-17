@@ -664,9 +664,14 @@ const MIN_W = 520, MAX_W = W;
 
 function fit(){
   const r = SVG.getBoundingClientRect();
-  const s = Math.min(r.width/(W+320), r.height/(H+320));
-  view.w = r.width/s; view.h = r.height/s;
-  view.x = W/2 - view.w/2; view.y = H/2 - view.h/2;
+  /* The map wraps horizontally, so "fit" isn't "show an edge-to-edge width"
+     (there is no edge) — it's the full vertical extent centred on Paradise,
+     never wider than one world. Computing it directly avoids the old bug
+     where an over-wide view got clamped and wrapped to the seam. */
+  view.w = Math.min(MAX_W, (H + 240) * (r.width / r.height));
+  view.h = view.w * (r.height / r.width);
+  view.x = W/2 - view.w/2;                 // Paradise sits at x = W/2
+  view.y = H/2 - view.h/2;
   draw();
 }
 function clampView(){
@@ -1198,22 +1203,13 @@ function renderAnchorage(id){
    ============================================================ */
 document.getElementById('openCrew').onclick = () => { renderCrew(); openModal('crewModal'); };
 function renderCrew(){
-  const grid = document.getElementById('crewGrid');
   const aboard = new Set(crewAboard().map(c => c.id));
-  grid.innerHTML = '';
-  CREW.forEach(c => {
-    const inCrew = aboard.has(c.id);
-    const arc = c.arc ? ARCS.find(a => a.id === c.arc) : null;
-    const hide = !inCrew && state.settings.spoiler;   // who joins, and when, is itself a spoiler
-    const d = document.createElement('div');
-    d.className = 'cm ' + (inCrew ? 'in' : 'out');
-    const sub = inCrew ? (arc ? `${c.role} \u00b7 joined at ${arc.n}` : 'Captain')
-              : hide   ? 'Not yet aboard'
-              : `${c.role} \u00b7 joins after ${arc.n}`;
-    d.innerHTML = `<span class="disc">${hide ? '?' : c.n[0]}</span>
-      <span class="t"><b>${hide ? '???' : c.n}</b><span>${sub}</span></span>`;
-    grid.appendChild(d);
-  });
+  /* One cumulative portrait: crew-1 is just Luffy, crew-2 adds Zoro, and so
+     on in join order \u2014 so the image is simply crew-<how many are aboard>. */
+  const n = Math.max(1, Math.min(CREW.length, aboard.size));
+  const img = document.getElementById('crewImg');
+  img.src = `images/crew-${n}.png`;
+  img.alt = `Your crew \u2014 ${n} aboard`;
   document.getElementById('crSub').textContent = aboard.size === CREW.length
     ? 'The full crew. Every seat on the ship is taken.'
     : 'They sign on as you sail. Finish the arc, gain the shipmate.';
@@ -1476,19 +1472,23 @@ function select(id, fly){
   renderAnchorage(id);
 
   const isPending = ARCS.some(a => a.unwritten && a.stops[0]===id);
-  const doneHere = units.filter(u => seen[medium()].has(u)).length;
+  /* Progress here is measured on the SIGNIFICANT units — filler doesn't count,
+     so watching an arc's canon fills the bar even with its fillers unticked.
+     (A filler island is all filler, so sigOr falls back to counting those.) */
+  const useUnits = sigOr(units, medium());
+  const doneHere = useUnits.filter(u => seen[medium()].has(u)).length;
 
   /* How far through this island are you? Without this the button was a black
      hole — you clicked, something changed somewhere else, and the label never
      moved, so there was no way to know whether to click it again. */
   const prog = document.getElementById('isleProg');
-  if (units.length && !shielded){
+  if (useUnits.length && !shielded){
     prog.style.display = '';
     prog.classList.toggle('fil', isFiller);
     document.getElementById('ipLabel').textContent = `${isFiller ? 'Filler ' : ''}${unitWord()}s here`;
-    document.getElementById('ipCount').textContent = `${doneHere} / ${units.length}`;
+    document.getElementById('ipCount').textContent = `${doneHere} / ${useUnits.length}`;
     requestAnimationFrame(() => {
-      document.getElementById('ipBar').style.width = `${doneHere / units.length * 100}%`;
+      document.getElementById('ipBar').style.width = `${doneHere / useUnits.length * 100}%`;
     });
   } else {
     prog.style.display = 'none';
@@ -1497,25 +1497,25 @@ function select(id, fly){
 
   sailbtn.className = 'sailbtn' + (isFiller ? ' fil' : '');
   sailbtn.onclick = null;
-  const last = units.length ? units[units.length - 1] : null;
+  const last = useUnits.length ? useUnits[useUnits.length - 1] : null;
   const w = medium() === 'anime' ? 'ep.' : 'ch.';
 
   if (isPending){
     sailbtn.disabled = true;
     sailbtn.classList.add('na');
     sailbtn.textContent = 'Not written yet';
-  } else if (!units.length){
+  } else if (!useUnits.length){
     sailbtn.disabled = true;
     sailbtn.classList.add('na');
     sailbtn.textContent = 'Not on the route';
-  } else if (doneHere === units.length){
+  } else if (doneHere === useUnits.length){
     sailbtn.disabled = true;                       // nothing left here. Stop taking clicks.
     sailbtn.classList.add('done');
     sailbtn.textContent = isFiller
-      ? `✓ Detour taken · all ${units.length} eps`
-      : `✓ Sailed · all ${units.length} ${unitWord()}s`;
+      ? `✓ Detour taken · all ${useUnits.length} eps`
+      : `✓ Sailed · all ${useUnits.length} ${unitWord()}s`;
   } else {
-    const left = units.length - doneHere;
+    const left = useUnits.length - doneHere;
     sailbtn.disabled = false;
     sailbtn.textContent = doneHere === 0
       ? (isFiller ? `Take the detour — through ep. ${last}`
