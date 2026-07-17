@@ -8,8 +8,8 @@
 
    Fill these in after creating a free project at supabase.com (Settings →
    API) and running supabase/schema.sql. */
-export const SUPABASE_URL = 'https://YOUR-PROJECT.supabase.co';
-export const SUPABASE_ANON_KEY = 'YOUR-ANON-PUBLIC-KEY';
+export const SUPABASE_URL = 'https://reitaosjsouvmxaqbwmy.supabase.co';
+export const SUPABASE_ANON_KEY = 'sb_publishable_xnHv_nopKpCd9ETrdYBxXQ_li4qNgps';
 
 export const supabaseConfigured =
   !SUPABASE_URL.includes('YOUR-PROJECT') && !SUPABASE_ANON_KEY.includes('YOUR-ANON');
