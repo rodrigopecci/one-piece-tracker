@@ -198,7 +198,20 @@
     background:rgba(8,32,45,.92);border:1px solid rgba(211,160,60,.34);border-radius:2px;
     padding:11px 13px;backdrop-filter:blur(3px);}
   .qlog.done{opacity:.75;}
-  .qlog-txt{min-width:0;margin-bottom:9px;}
+  .qlog-txt{min-width:0;margin-bottom:9px;padding-right:24px;}
+  /* collapse / expand the bottom-left voyage HUD (Next up + Log Pose) */
+  .voyage-collapse{position:absolute;top:8px;right:9px;width:22px;height:22px;padding:0;z-index:2;
+    background:none;border:1px solid rgba(211,160,60,.3);color:var(--brass-lite);border-radius:2px;
+    font-family:var(--mono);font-size:13px;line-height:1;cursor:pointer;}
+  .voyage-collapse:hover{background:rgba(211,160,60,.14);border-color:var(--brass);}
+  .voyage-expand{position:absolute;left:14px;bottom:14px;z-index:10;display:none;align-items:center;gap:7px;
+    background:rgba(8,32,45,.92);border:1px solid rgba(211,160,60,.34);border-radius:2px;padding:8px 12px;
+    color:var(--paper);font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+    cursor:pointer;backdrop-filter:blur(3px);}
+  .voyage-expand .ve-caret{color:var(--brass);font-size:12px;}
+  .voyage-expand:hover{border-color:var(--brass);background:rgba(14,48,64,.95);}
+  body.voyage-collapsed #qlog, body.voyage-collapsed #pose{display:none;}
+  body.voyage-collapsed .voyage-expand{display:flex;}
   .qlog-k{font-family:var(--mono);font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--brass);display:block;}
   .qlog-v{font-family:var(--display);font-size:19px;letter-spacing:.03em;display:block;margin-top:2px;line-height:1.15;}
   .qlog-c{font-family:var(--mono);font-size:10px;color:rgba(239,230,210,.55);display:block;margin-top:3px;
@@ -255,6 +268,7 @@
   .arc-row:hover{background:rgba(211,160,60,.06);}
   .arc.filler .arc-row{background:rgba(227,179,65,.05);}
   .arc.gap .arc-row{box-shadow:inset 3px 0 0 var(--voyage);}
+  .arc.miss .arc-row{box-shadow:inset 3px 0 0 var(--brass);}
   .arc-name{flex:1;min-width:0;background:none;border:0;color:var(--paper);text-align:left;cursor:pointer;
     padding:0;font-family:var(--body);font-size:13.5px;}
   .arc-name .t{display:flex;align-items:center;gap:7px;}
@@ -268,6 +282,7 @@
   .tag.soon{background:rgba(95,166,188,.14);color:#9FD4E4;border:1px solid rgba(95,166,188,.3);}
   .tag.nolan{background:rgba(95,166,188,.1);color:#7FBACB;border:1px solid rgba(95,166,188,.25);}
   .tag.skip{background:rgba(224,80,63,.16);color:#F0A99C;border:1px solid rgba(224,80,63,.4);}
+  .tag.miss{background:rgba(211,160,60,.16);color:var(--brass-lite);border:1px solid rgba(211,160,60,.42);}
   .arc-count{font-family:var(--mono);font-size:10px;color:rgba(239,230,210,.45);flex:none;}
   .tick{width:19px;height:19px;flex:none;border-radius:2px;cursor:pointer;border:1px solid rgba(211,160,60,.45);
     background:none;display:flex;align-items:center;justify-content:center;color:#0B1A22;font-size:11px;line-height:1;padding:0;}
@@ -449,6 +464,7 @@
     </button>
 
     <div class="qlog" id="qlog">
+      <button class="voyage-collapse" id="voyageCollapse" aria-label="Collapse the voyage cards" title="Collapse">⌄</button>
       <div class="qlog-txt">
         <span class="qlog-k" id="qlogK">Next up</span>
         <span class="qlog-v" id="qlogV">Ep. 1</span>
@@ -461,6 +477,10 @@
         <button id="qlogGo" aria-label="Mark everything through this number">→</button>
       </div>
     </div>
+
+    <button class="voyage-expand" id="voyageExpand" aria-label="Show the voyage cards">
+      <span class="ve-caret">⌃</span> Voyage
+    </button>
 
     <div class="zoom">
       <button id="zin" aria-label="Zoom in">+</button>

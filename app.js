@@ -355,7 +355,7 @@ const state = {
   medium:'anime',
   user:null,
   history:{anime:{}, manga:{}},        // yyyy-mm-dd -> how many you marked that day
-  settings:{public:false, crew:false, spoiler:true, showFiller:true, countFiller:true},
+  settings:{public:false, crew:false, spoiler:true, showFiller:true, countFiller:true, voyageCollapsed:false},
   removed:{anime:{}, manga:{}},        // unit -> ms timestamp, recently unticked (merge tiebreak)
 };
 const seen = {anime:new Set(), manga:new Set()};
@@ -376,7 +376,18 @@ function unitsOf(arc, med){
 }
 const arcsFor = med => ARCS.filter(a => rangeOf(a, med));
 const seenIn = (arc, med) => unitsOf(arc, med).filter(u => seen[med].has(u)).length;
-const arcDone = (arc, med) => { const u = unitsOf(arc, med); return u.length > 0 && u.every(x => seen[med].has(x)); };
+
+/* Filler is optional bonus content — you can tick it, and it shows in the
+   per-arc counts, but it never decides whether you've *watched the story*.
+   Position, the route, arc completion, crew, and the skipped/missing tags all
+   key off the SIGNIFICANT (non-filler) units. Manga has no filler, so there
+   every unit counts. `sigOr` falls back to all units for the rare stop chunk
+   that is entirely filler, so it can still be completed. */
+const sigUnits = (units, med) => med === 'anime' ? units.filter(u => !isFillerEp(u)) : units;
+const sigOr = (units, med) => { const s = sigUnits(units, med); return s.length ? s : units; };
+const relevantUnits = (arc, med) => sigUnits(unitsOf(arc, med), med);
+
+const arcDone = (arc, med) => { const u = sigOr(unitsOf(arc, med), med); return u.length > 0 && u.every(x => seen[med].has(x)); };
 const crewAboard = () => CREW.filter(c => !c.arc || arcDone(ARCS.find(a => a.id === c.arc), medium()));
 
 /* ---- the route: one stop per island landed on, in story order ---- */
@@ -398,8 +409,8 @@ function buildStops(med){
 let STOPS = buildStops('anime');
 const rebuildStops = () => { STOPS = buildStops(medium()); };
 
-const stopReached  = s => !s.pending && s.units.some(u => seen[medium()].has(u));
-const stopComplete = s => !s.pending && s.units.every(u => seen[medium()].has(u));
+const stopReached  = s => !s.pending && sigOr(s.units, medium()).some(u => seen[medium()].has(u));
+const stopComplete = s => !s.pending && sigOr(s.units, medium()).every(u => seen[medium()].has(u));
 
 /* Where you are = the furthest stop you've set foot on. Not the furthest
    *unbroken* stop — if you skipped Little Garden, you're still at Drum. */
@@ -1062,6 +1073,12 @@ document.getElementById('qlogInput').addEventListener('keydown', e => {
   if (e.key === 'Enter'){ e.preventDefault(); document.getElementById('qlogGo').click(); }
 });
 
+/* collapse / expand the bottom-left voyage HUD (Next up + Log Pose), remembered */
+const applyVoyageCollapsed = () => document.body.classList.toggle('voyage-collapsed', !!state.settings.voyageCollapsed);
+const setVoyageCollapsed = v => { state.settings.voyageCollapsed = v; applyVoyageCollapsed(); persist(); };
+document.getElementById('voyageCollapse').onclick = () => setVoyageCollapsed(true);
+document.getElementById('voyageExpand').onclick = () => setVoyageCollapsed(false);
+
 /* ============================================================
    PACE — how fast are you actually going?
    A day where you ticked a huge block is data entry, not viewing, so it's
@@ -1193,25 +1210,40 @@ openBookBtn.onclick = () => setBook(true);
 document.getElementById('closeBook').onclick = () => setBook(false);
 scrim.onclick = () => setBook(false);
 
-/* which canon arcs did you leave unfinished behind you? */
-function gapArcs(){
+/* Classify canon arcs you've moved PAST but not finished. Filler never counts
+   (see sigUnits), so leaving Alabasta's fillers unwatched is not a skip.
+     - skipped: you leapfrogged the arc entirely — no significant unit watched.
+     - missing: you watched part of it but left canon/mixed units unwatched.
+   Arcs you're currently in or haven't reached yet get neither. */
+function arcStatuses(){
+  const med = medium();
   const cur = currentStopIndex();
-  const ids = new Set();
-  STOPS.forEach((s,i) => { if (i < cur && !s.pending && !stopComplete(s)) ids.add(s.arc.id); });
-  return [...ids];
+  const arcMaxStop = {};
+  STOPS.forEach((s,i) => { arcMaxStop[s.arc.id] = Math.max(arcMaxStop[s.arc.id] ?? -1, i); });
+  const out = {};
+  arcsFor(med).forEach(arc => {
+    const maxIdx = arcMaxStop[arc.id];
+    if (maxIdx === undefined || maxIdx >= cur) return;   // off-route, current, or ahead
+    const rel = relevantUnits(arc, med);
+    if (!rel.length) return;
+    const seenN = rel.filter(u => seen[med].has(u)).length;
+    if (seenN === 0) out[arc.id] = 'skipped';
+    else if (seenN < rel.length) out[arc.id] = 'missing';
+  });
+  return out;
 }
 function updateBehind(){
-  const gaps = gapArcs();
+  const ids = Object.keys(arcStatuses());
   const dot = document.getElementById('behindDot');
-  dot.classList.toggle('on', gaps.length > 0);
-  dot.textContent = gaps.length || '';
+  dot.classList.toggle('on', ids.length > 0);
+  dot.textContent = ids.length || '';
   const btn = document.getElementById('behindBtn');
-  if (!gaps.length){ btn.style.display='none'; return; }
+  if (!ids.length){ btn.style.display='none'; return; }
   btn.style.display='';
   document.getElementById('behindTxt').textContent =
-    `${gaps.length} arc${gaps.length===1?'':'s'} left behind you`;
+    `${ids.length} arc${ids.length===1?'':'s'} left behind you`;
   btn.onclick = () => {
-    const first = gaps[0];
+    const first = ids[0];
     openArcs.add(first);
     renderBook();
     setBook(true);
@@ -1228,7 +1260,7 @@ function renderBook(){
     ? `${LAST_EP} eps \u00b7 ${EP_TYPE.filter(t => t === 'filler').length} filler`
     : 'chapters estimated';
   bookScroll.innerHTML = '';
-  const gaps = new Set(gapArcs());
+  const statuses = arcStatuses();
   let saga = null;
 
   arcsFor(medium()).forEach(arc => {
@@ -1240,9 +1272,11 @@ function renderBook(){
     }
     const units = unitsOf(arc, medium());
     const done = seenIn(arc, medium());
+    const status = statuses[arc.id];
     const wrap = document.createElement('div');
     wrap.className = 'arc' + (arc.detour?' filler':'') + (done===units.length?' done':'')
-      + (openArcs.has(arc.id)?' open':'') + (gaps.has(arc.id)?' gap':'');
+      + (openArcs.has(arc.id)?' open':'')
+      + (status==='skipped'?' gap':'') + (status==='missing'?' miss':'');
     wrap.dataset.arc = arc.id;
 
     const row = document.createElement('div');
@@ -1270,7 +1304,8 @@ function renderBook(){
     const tags = (arc.detour ? '<span class="tag fil">Filler</span>' : '')
       + (!arc.detour && fillerHere ? `<span class="tag fil">${fillerHere} filler</span>` : '')
       + (arc.offRoute ? '<span class="tag nolan">No landfall</span>' : '')
-      + (gaps.has(arc.id) ? '<span class="tag skip">Skipped</span>' : '')
+      + (status==='skipped' ? '<span class="tag skip">Skipped</span>' : '')
+      + (status==='missing' ? `<span class="tag miss">Missing ${unitWord()}s</span>` : '')
       + (mate && !state.settings.spoiler ? `<span class="tag crew">${mate.n.split(' ').pop()}</span>` : '');
 
     const name = document.createElement('button');
@@ -1840,7 +1875,7 @@ window.addEventListener('resize', () => { clampView(); draw(); });
   setupAuth();
   mAnime.setAttribute('aria-pressed', String(state.medium==='anime'));
   mManga.setAttribute('aria-pressed', String(state.medium==='manga'));
-  rebuildStops(); buildRoute(); renderAcct(); renderSettings(); renderCrew(); renderQuickLog(); renderAuthMode();
+  rebuildStops(); buildRoute(); renderAcct(); renderSettings(); renderCrew(); renderQuickLog(); renderAuthMode(); applyVoyageCollapsed();
   requestAnimationFrame(() => {
     for (const id in nodes){
       const {lbl} = nodes[id];
