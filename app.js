@@ -1036,10 +1036,21 @@ poseBtn.onclick = () => {
    ============================================================ */
 const qlog = document.getElementById('qlog');
 const arcOfUnit = (u, med) => ARCS.find(a => { const r = rangeOf(a, med); return r && u >= r[0] && u <= r[1]; });
+/* "Next up" is the next unit AFTER the furthest you've watched — not the
+   lowest gap. So skipping the Warship Island fillers back in East Blue doesn't
+   leave you pointed at ep 54 while you're actually at Water 7; it always moves
+   forward with you. When you're not counting filler (Settings → "Count filler
+   toward progress" off) it also steps over filler episodes, since you skip them. */
 function nextUnitToMark(med){
   const last = med === 'anime' ? LAST_EP : LAST_CH;
-  for (let u = 1; u <= last; u++) if (!seen[med].has(u)) return u;
-  return null;                       // everything marked — caught up
+  let maxSeen = 0;
+  seen[med].forEach(u => { if (u > maxSeen) maxSeen = u; });
+  const skipFiller = med === 'anime' && !state.settings.countFiller;
+  for (let u = maxSeen + 1; u <= last; u++){
+    if (skipFiller && isFillerEp(u)) continue;
+    return u;
+  }
+  return null;                       // nothing further — caught up
 }
 function renderQuickLog(){
   const med = medium();
@@ -1080,8 +1091,12 @@ function quickJumpTo(n){
   const last = med === 'anime' ? LAST_EP : LAST_CH;
   n = Math.max(1, Math.min(last, Math.floor(n)));
   if (!Number.isFinite(n)) return;
+  const skipFiller = med === 'anime' && !state.settings.countFiller;
   let added = 0;
-  for (let u = 1; u <= n; u++) if (!seen[med].has(u)){ seen[med].add(u); added++; }   // additive — never unmarks
+  for (let u = 1; u <= n; u++){
+    if (skipFiller && isFillerEp(u)) continue;       // catching up canon-only when you skip filler
+    if (!seen[med].has(u)){ seen[med].add(u); added++; }   // additive — never unmarks
+  }
   recordProgress(added);
   document.getElementById('qlogInput').value = '';
   commit();
