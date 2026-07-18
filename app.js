@@ -1827,12 +1827,13 @@ function diffRemoved(){
   });
 }
 
+let syncWarned = false;
 async function pushRemote(){
   if (!supabase || !state.user?.id) return;
   diffRemoved();
   pruneRemoved(state.removed.anime); pruneRemoved(state.removed.manga);
   try {
-    await supabase.from('progress').upsert({
+    const { error } = await supabase.from('progress').upsert({
       user_id: state.user.id,
       anime_ranges: toRanges(seen.anime),
       manga_ranges: toRanges(seen.manga),
@@ -1840,9 +1841,15 @@ async function pushRemote(){
       settings: state.settings,
       removed: state.removed,
       updated_at: new Date().toISOString(),
-    });
+    }, { onConflict: 'user_id' });
+    if (error) throw error;
     lastSyncedSeen = {anime:new Set(seen.anime), manga:new Set(seen.manga)};
-  } catch { /* background sync — next edit will just try again */ }
+    syncWarned = false;
+  } catch (e){
+    // Don't fail silently — a broken cloud save is exactly what destroys trust.
+    console.error('Grand Line Chart — cloud save failed:', e?.message || e);
+    if (!syncWarned){ syncWarned = true; toast('Couldn’t save to the cloud — will keep retrying'); }
+  }
 }
 
 function mergeSeen(localSet, remoteSet, localRemoved, remoteRemoved, remoteUpdatedAt){
@@ -1860,10 +1867,15 @@ function mergeHistory(a, b){
   return out;
 }
 
-async function pullAndMerge(){
+/* applySettings: adopt the account's saved settings too (used on an explicit
+   sign-in — that's when you want "my settings from my other device"). On a
+   plain reload we only merge progress, so we never clobber a setting you just
+   changed on this device. */
+async function pullAndMerge({ applySettings = false } = {}){
   if (!supabase || !state.user?.id) return;
   try {
-    const { data } = await supabase.from('progress').select('*').eq('user_id', state.user.id).maybeSingle();
+    const { data, error } = await supabase.from('progress').select('*').eq('user_id', state.user.id).maybeSingle();
+    if (error) throw error;
     if (data){
       const remoteUpdatedAt = new Date(data.updated_at).getTime();
       seen.anime = mergeSeen(seen.anime, fromRanges(data.anime_ranges), state.removed.anime, data.removed?.anime||{}, remoteUpdatedAt);
@@ -1871,8 +1883,9 @@ async function pullAndMerge(){
       state.history = mergeHistory(state.history, data.history);
       for (const med of ['anime','manga'])
         state.removed[med] = pruneRemoved({ ...(data.removed?.[med]||{}), ...state.removed[med] });
+      if (applySettings && data.settings) Object.assign(state.settings, data.settings);
     }
-  } catch { /* offline, or first sign-in with no row yet — local state stands as-is */ }
+  } catch (e){ console.error('Grand Line Chart — cloud load failed:', e?.message || e); }
   lastSyncedSeen = {anime:new Set(seen.anime), manga:new Set(seen.manga)};
   persist();
   await pushRemote();
@@ -1890,13 +1903,36 @@ function setupAuth(){
         provider: session.user.app_metadata?.provider || 'email',
       };
       renderAcct(); renderSettings();
-      if (event === 'SIGNED_IN') pullAndMerge().then(() => { renderBook(); renderCrew(); draw(); });
+      /* Sync down on an explicit sign-in (adopt account settings too) and on a
+         reload with an existing session (progress only). Then re-render
+         everything a synced setting or new progress could affect. */
+      if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION'){
+        pullAndMerge({ applySettings: event === 'SIGNED_IN' }).then(() => {
+          rebuildStops(); buildRoute();
+          renderSettings(); applyVoyageCollapsed();
+          renderBook(); renderCrew(); renderQuickLog();
+          if (selected) select(selected, false);
+          draw();
+        });
+      }
     } else if (event === 'SIGNED_OUT'){
       state.user = null;
       renderAcct(); renderSettings();
     }
   });
 }
+
+/* Both saves are debounced (400ms local, 1500ms cloud), so a mark made just
+   before you close the tab or switch apps could be lost in flight. When the
+   page is hidden, flush both immediately — this is the difference between
+   "I ticked it and it's gone" and a tracker you can trust. */
+function flushSync(){
+  clearTimeout(saveTimer);
+  try { localStorage.setItem(KEY, snapshot()); } catch {}
+  if (supabase && state.user?.id){ clearTimeout(remoteTimer); pushRemote(); }
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushSync(); });
+window.addEventListener('pagehide', flushSync);
 
 function commit(){
   const before = new Set(crewAboard().map(c => c.id));
