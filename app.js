@@ -511,6 +511,15 @@ function reachedIslands(){
   STOPS.forEach(s => { if (stopReached(s)) set.add(s.island); });
   return set;
 }
+/* How far through a single island's episodes you are — the intra-arc progress
+   the route line can't show, since a leg only turns red once you've cleared the
+   whole island and moved on. Measured on significant units (filler excluded). */
+function islandProgress(id){
+  const use = sigOr(STOPS.filter(s => s.island === id).flatMap(s => s.units), medium());
+  if (!use.length) return null;
+  const done = use.filter(u => seen[medium()].has(u)).length;
+  return {done, total: use.length, frac: done / use.length};
+}
 
 /* Filler belongs to an episode, not to an arc. Alabasta contains three filler
    episodes; Wano contains six. The manga has none at all. */
@@ -710,13 +719,15 @@ function buildMarkers(){
       : el('circle',{class:cls,cx:wx,cy:isle.y,...extra});
     const body = mk('body',{stroke:'var(--ink)','stroke-width':1});
     const sheen = mk('sheen',{fill:'url(#isleSheen)','pointer-events':'none'});
+    const prog = el('circle',{class:'prog',cx:wx,cy:isle.y,fill:'none',stroke:'var(--voyage)',
+      'stroke-linecap':'round',opacity:0,'pointer-events':'none'});
     const hit = el('circle',{class:'hit',cx:wx,cy:isle.y,fill:'transparent'});
-    g.append(halo,shadow,body,sheen,ring,hit);
+    g.append(halo,shadow,body,sheen,ring,prog,hit);
     markerLayer.appendChild(g);
     const lbl = el('text',{class:'lbl'});
     lbl.textContent = isle.n;
     labelLayer.appendChild(lbl);
-    nodes[`${isle.id}#${ti}`] = {g,halo,shadow,ring,body,sheen,hit,lbl,isle,wx,w100:0};
+    nodes[`${isle.id}#${ti}`] = {g,halo,shadow,ring,prog,body,sheen,hit,lbl,isle,wx,w100:0};
     g.addEventListener('click', e => { e.stopPropagation(); select(isle.id, true); });
     g.addEventListener('keydown', e => { if (e.key==='Enter'||e.key===' '){ e.preventDefault(); select(isle.id,true); } });
     g.addEventListener('pointerenter', () => { hovered = isle.id; draw(); });
@@ -807,7 +818,7 @@ function draw(){
   const visible = [], obstacles = [];
   for (const id in nodes){
     const nd = nodes[id];
-    const {isle,g,halo,shadow,ring,body,sheen,hit,lbl} = nd;
+    const {isle,g,halo,shadow,ring,prog,body,sheen,hit,lbl} = nd;
 
     if (isle.type === 'filler' && !fillerShown()){ g.classList.add('gone'); lbl.style.display='none'; continue; }
     g.classList.remove('gone');
@@ -863,6 +874,24 @@ function draw(){
     ring.setAttribute('stroke-width', ringW*k);
     ring.style.opacity = ringOp;
     body.setAttribute('fill', fill);
+
+    /* Intra-island progress: the island you're on gets a red arc that fills as
+       you watch through it — so parking on one island for 40 episodes still
+       shows movement, even though the route line to the next island can't. */
+    let showProg = false;
+    if (isHere && isle.type !== 'filler'){
+      const p = islandProgress(isle.id);
+      if (p && p.done > 0 && p.done < p.total){
+        const pr = rr + 3.4*k, C = 2*Math.PI*pr;
+        prog.setAttribute('r', pr);
+        prog.setAttribute('stroke-width', 2.6*k);
+        prog.setAttribute('stroke-dasharray', `${(p.frac*C).toFixed(1)} ${C.toFixed(1)}`);
+        prog.setAttribute('transform', `rotate(-90 ${nd.wx} ${isle.y})`);
+        prog.style.opacity = 1;
+        showProg = true;
+      }
+    }
+    if (!showProg) prog.style.opacity = 0;
 
     const sx = (nd.wx-view.x)*scale, sy = (isle.y-view.y)*scale;
     lbl.style.display='none';
@@ -1577,9 +1606,11 @@ function select(id, fly){
     prog.style.display = '';
     prog.classList.toggle('fil', isFiller);
     document.getElementById('ipLabel').textContent = `${isFiller ? 'Filler ' : ''}${unitWord()}s here`;
-    document.getElementById('ipCount').textContent = `${doneHere} / ${useUnits.length}`;
+    const pct = doneHere / useUnits.length * 100;
+    document.getElementById('ipCount').textContent = `${doneHere} / ${useUnits.length} · ${Math.round(pct)}%`;
     requestAnimationFrame(() => {
-      document.getElementById('ipBar').style.width = `${doneHere / useUnits.length * 100}%`;
+      // floor a nonzero fraction to a visible sliver so "1 of 48" still reads as started
+      document.getElementById('ipBar').style.width = doneHere ? `${Math.max(pct, 5)}%` : '0%';
     });
   } else {
     prog.style.display = 'none';
