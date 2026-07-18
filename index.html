@@ -297,7 +297,9 @@
   .arc.open .units{display:block;}
   .unit{display:flex;align-items:center;gap:9px;padding:4px 0;}
   .unit .u-name{flex:1;min-width:0;background:none;border:0;text-align:left;cursor:pointer;padding:3px 6px;
-    color:rgba(239,230,210,.75);font-family:var(--mono);font-size:11.5px;border-radius:2px;}
+    color:rgba(239,230,210,.75);font-family:var(--mono);font-size:11.5px;border-radius:2px;
+    white-space:normal;line-height:1.45;}
+  .unit .u-name .ut{color:rgba(239,230,210,.92);font-family:var(--body);}
   .unit .u-name:hover{background:rgba(211,160,60,.12);color:var(--paper);}
   .unit.seen .u-name{color:#F0A99C;}
   .arc.filler .unit.seen .u-name{color:var(--filler);}
@@ -359,6 +361,23 @@
     border-top:1px solid rgba(211,160,60,.16);}
   .lore::before{content:"Lore";display:block;font-family:var(--mono);font-size:9px;letter-spacing:.22em;
     text-transform:uppercase;color:var(--brass);opacity:.75;margin-bottom:7px;}
+  /* "Now reading/watching" — the current unit, in the island panel */
+  .nowread{border:1px solid rgba(211,160,60,.25);border-radius:3px;padding:11px 12px;margin:0 0 16px;
+    background:rgba(211,160,60,.05);}
+  .nowread .nr-hd{font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--brass);margin-bottom:8px;}
+  .nr-unit{display:block;width:100%;text-align:left;background:rgba(233,220,192,.05);cursor:pointer;
+    border:1px solid rgba(211,160,60,.22);border-radius:2px;padding:9px 10px;margin-bottom:10px;color:var(--paper);}
+  .nr-unit:hover{border-color:var(--brass);background:rgba(211,160,60,.1);}
+  .nr-unit .nr-n{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--brass);margin-bottom:3px;}
+  .nr-unit .nr-t{display:block;font-family:var(--display);font-size:16px;line-height:1.25;}
+  .nowread .nr-mark{margin-bottom:0;}
+  /* unit-detail modal (title + full summary) */
+  .umsum{white-space:pre-wrap;font-size:14px;line-height:1.66;color:rgba(239,230,210,.86);margin:2px 0 20px;}
+  .umacts{display:flex;flex-direction:column;gap:9px;}
+  .umacts .sailbtn{margin:0;}
+  .umlink{background:none;border:0;color:var(--brass-lite);font-family:var(--body);font-size:12.5px;
+    cursor:pointer;text-decoration:underline;padding:4px;}
   .veil{border:1px dashed rgba(95,166,188,.4);background:rgba(95,166,188,.06);border-radius:2px;padding:14px;margin-bottom:18px;}
   .veil p{margin:0 0 10px;font-size:13px;color:rgba(239,230,210,.7);line-height:1.55;}
   .veil button{background:none;border:1px solid rgba(211,160,60,.4);color:var(--brass-lite);font-family:var(--mono);
@@ -520,6 +539,14 @@
             <div class="pbar"><i id="ipBar"></i></div>
           </div>
           <button class="sailbtn" id="sailbtn">Sail here</button>
+          <div class="nowread" id="nowRead" style="display:none">
+            <div class="nr-hd" id="nrLabel">Up next here</div>
+            <button class="nr-unit" id="nrUnit">
+              <span class="nr-n" id="nrN">Ch. —</span>
+              <span class="nr-t" id="nrT">—</span>
+            </button>
+            <button class="sailbtn nr-mark" id="nrMark">Mark read &amp; go to next</button>
+          </div>
           <dl class="meta">
             <dt>Sea</dt><dd id="pSea">—</dd>
             <dt>Arc</dt><dd id="pArc">—</dd>
@@ -570,6 +597,24 @@
     <h3 id="crTitle">Your crew</h3>
     <p class="sub" id="crSub">They sign on as you sail. Finish the arc, gain the shipmate.</p>
     <img class="crewimg" id="crewImg" alt="Your crew" />
+  </div>
+</div>
+
+<div class="modal" id="unitModal">
+  <div class="back" data-close></div>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="umTitle">
+    <button class="x" data-close aria-label="Close">✕</button>
+    <p class="eyebrow" id="umKind">Chapter</p>
+    <h3 id="umTitle">—</h3>
+    <div class="veil" id="umVeil" style="display:none">
+      <p>This is ahead of where you've read — the summary will spoil it.</p>
+      <button id="umReveal">Reveal anyway</button>
+    </div>
+    <p class="umsum" id="umSum">—</p>
+    <div class="umacts">
+      <button class="sailbtn" id="umMark">Mark as read</button>
+      <button class="umlink" id="umThrough">Set my progress to here</button>
+    </div>
   </div>
 </div>
 
@@ -634,6 +679,6 @@
 
 <!-- Bump ?v= whenever app.js changes, so GitHub Pages' 10-min asset cache can't
      serve a stale app.js against a fresh index.html (see CLAUDE.md → Deploy). -->
-<script type="module" src="app.js?v=10"></script>
+<script type="module" src="app.js?v=11"></script>
 </body>
 </html>

@@ -1393,6 +1393,102 @@ function updateBehind(){
   };
 }
 
+/* ============================================================
+   UNIT CONTENT — Viz/official titles + short summaries, lazy-loaded from
+   data/<kind>/<block>.json in 100-unit blocks, only for arcs you actually
+   open. This is reference data and lives in git like ARCS, not the database;
+   a missing file or being offline just means no titles, same as before.
+   ============================================================ */
+const content = { anime:{}, manga:{} };
+const loadedBlocks = { anime:new Set(), manga:new Set() };
+const blockPromises = { anime:{}, manga:{} };
+const contentDir = med => med === 'anime' ? 'episodes' : 'chapters';
+
+function loadContentBlock(med, block){
+  if (loadedBlocks[med].has(block)) return Promise.resolve();
+  if (blockPromises[med][block]) return blockPromises[med][block];
+  const p = (async () => {
+    try {
+      const res = await fetch(`data/${contentDir(med)}/${block}.json`);
+      if (res.ok) Object.assign(content[med], await res.json());
+    } catch { /* offline / not scraped yet — the app works fine without titles */ }
+    loadedBlocks[med].add(block);
+  })();
+  blockPromises[med][block] = p;
+  return p;
+}
+/* Ensure the block(s) covering units [from..to] are in memory; returns true if
+   they already are, else kicks off the fetch and calls `after` once loaded. */
+function ensureContent(med, from, to, after){
+  const need = [];
+  for (let b = Math.floor(from / 100); b <= Math.floor(to / 100); b++)
+    if (!loadedBlocks[med].has(b)) need.push(b);
+  if (!need.length) return true;
+  Promise.all(need.map(b => loadContentBlock(med, b))).then(() => after && after());
+  return false;
+}
+const unitInfo = (med, u) => content[med][u] || null;
+/* Titles/summaries are spoilers — same rule as the island shield: shown only
+   for units you've reached, or when the spoiler shield is off. */
+const unitRevealed = (med, u) => !state.settings.spoiler || seen[med].has(u);
+const unitTag = (med, u) => `${med === 'anime' ? 'Ep.' : 'Ch.'} ${u}`;
+
+let bookReloadT;
+const scheduleBook = () => { clearTimeout(bookReloadT); bookReloadT = setTimeout(renderBook, 30); };
+
+/* ---- unit-detail modal (title + full short summary) ---- */
+let umUnit = null, umReveal = false;
+function openUnit(u){
+  umUnit = u; umReveal = false;
+  openModal('unitModal');
+  ensureContent(medium(), u, u, () => { if (umUnit === u) fillUnitModal(); });
+  fillUnitModal();
+}
+function fillUnitModal(){
+  const med = medium(), u = umUnit;
+  if (u == null) return;
+  const c = unitInfo(med, u);
+  const revealed = unitRevealed(med, u) || umReveal;
+  document.getElementById('umKind').textContent = med === 'anime' ? 'Episode' : 'Chapter';
+  document.getElementById('umTitle').textContent = (revealed && c) ? `${unitTag(med, u)} — ${c.t}` : unitTag(med, u);
+  const veil = document.getElementById('umVeil'), sum = document.getElementById('umSum');
+  veil.style.display = revealed ? 'none' : '';
+  sum.style.display = revealed ? '' : 'none';
+  if (revealed)
+    sum.textContent = c ? c.s : (loadedBlocks[med].has(Math.floor(u / 100)) ? 'No summary available.' : 'Loading…');
+  const mark = document.getElementById('umMark'), has = seen[med].has(u);
+  mark.textContent = has ? '✓ Marked — tap to unmark' : `Mark ${med === 'anime' ? 'watched' : 'read'}`;
+  mark.onclick = () => {
+    if (seen[med].has(u)) seen[med].delete(u);
+    else { seen[med].add(u); recordProgress(1); }
+    commit(); fillUnitModal();
+  };
+  const thr = document.getElementById('umThrough');
+  thr.textContent = `Set my progress to ${unitTag(med, u)}`;
+  thr.onclick = () => { markThrough(u); fillUnitModal(); };
+}
+document.getElementById('umReveal').onclick = () => { umReveal = true; fillUnitModal(); };
+
+/* ---- "Now reading/watching" — the current unit, inside the island panel ---- */
+function renderNowReading(isle, useUnits, shielded){
+  const box = document.getElementById('nowRead');
+  const med = medium();
+  const cur = shielded ? null : useUnits.find(u => !seen[med].has(u));
+  if (cur == null){ box.style.display = 'none'; return; }
+  box.style.display = '';
+  ensureContent(med, cur, cur, () => { if (selected === isle.id) renderNowReading(isle, useUnits, isShielded(isle.id)); });
+  const c = unitInfo(med, cur), revealed = unitRevealed(med, cur);
+  document.getElementById('nrLabel').textContent = med === 'anime' ? 'Up next to watch' : 'Up next to read';
+  document.getElementById('nrN').textContent = unitTag(med, cur);
+  document.getElementById('nrT').textContent = (revealed && c) ? c.t
+    : c ? 'Hidden — spoiler shield is on'
+    : (loadedBlocks[med].has(Math.floor(cur / 100)) ? '(untitled)' : 'Loading…');
+  document.getElementById('nrUnit').onclick = () => openUnit(cur);
+  const mark = document.getElementById('nrMark');
+  mark.textContent = `Mark ${med === 'anime' ? 'watched' : 'read'} & go to next`;
+  mark.onclick = () => { seen[med].add(cur); recordProgress(1); commit(); };  // commit re-runs select → advances
+}
+
 function renderBook(){
   document.getElementById('unitWord').textContent = unitWord();
   document.getElementById('legFil').style.display = medium()==='anime' ? '' : 'none';
@@ -1464,6 +1560,7 @@ function renderBook(){
     if (openArcs.has(arc.id)){
       const ul = document.createElement('div');
       ul.className='units';
+      ensureContent(medium(), units[0], units[units.length-1], scheduleBook);  // titles for this arc
       units.forEach(u => {
         const anime = medium()==='anime';
         const ty = anime ? EP_TYPE[u] : 'manga';
@@ -1481,9 +1578,16 @@ function renderBook(){
         };
         const nm = document.createElement('button');
         nm.className='u-name';
-        nm.textContent = `${anime ? 'Ep.' : 'Ch.'} ${u}`;
-        nm.title = 'Mark everything up to here';
-        nm.onclick = () => markThrough(u);
+        const info = unitInfo(medium(), u);
+        if (info && (!state.settings.spoiler || seen[medium()].has(u))){
+          nm.textContent = `${anime ? 'Ep.' : 'Ch.'} ${u} — `;
+          const ut = document.createElement('span'); ut.className = 'ut'; ut.textContent = info.t;
+          nm.appendChild(ut);
+        } else {
+          nm.textContent = `${anime ? 'Ep.' : 'Ch.'} ${u}`;
+        }
+        nm.title = 'Details & summary';
+        nm.onclick = () => openUnit(u);
         li.append(t, nm);
         // canon is the silent default; only the exceptions get a badge
         if (anime && ty !== 'manga'){
@@ -1650,6 +1754,8 @@ function select(id, fly){
                      : `Arrived at ${isle.n} · marked through ${w} ${last}`);
     };
   }
+
+  renderNowReading(isle, useUnits, shielded);
 
   panel.classList.add('open');
   panel.setAttribute('aria-hidden','false');

@@ -31,11 +31,18 @@ app.js                           all client-side logic (module script),
                                  including the ARCS array — the single source
                                  of truth for episodes/chapters
 config.js                        Supabase URL + anon key (public-safe); optional
+data/
+  chapters/<block>.json          scraped chapter titles + short summaries,
+  episodes/<block>.json          100 units per block (block = n/100). Lazy-
+                                 loaded per arc; reference data, in git.
+scripts/
+  fetch-fandom.mjs               scrapes titles+summaries from the fandom
+                                 MediaWiki API into data/ (re-run to update)
 supabase/
   schema.sql                     run once in the Supabase SQL editor — one
                                  table: progress
 .github/workflows/keepalive.yml  pings Supabase so the free tier doesn't pause
-package.json                     just `npm run serve`
+package.json                     `serve`, `fetch:chapters`, `fetch:episodes`
 ```
 
 Keep it dependency-free and buildless — it deploys anywhere, loads instantly,
@@ -87,12 +94,22 @@ episode or chapter airs, its number, kind, and arc never change. So it lives
 in code — in git, reviewable, deployed atomically — not in a database. The
 database holds only users and their progress.
 
-No titles anywhere, anime or manga. There's no clean API for either (checked:
-Jikan has episode titles but a binary filler flag that disagrees with the
-4-way taxonomy the app shows; MangaDex lost nearly all English chapters to a
-publisher takedown; AniList/Jikan don't track chapter titles). Numbers only,
-both media. There's no filler/mixed concept on the manga side anyway — it's
+Titles + short summaries now come from the **One Piece fandom wiki's MediaWiki
+API** (`onepiece.fandom.com/api.php`) — the clean, reliable source the earlier
+"no clean API" verdict was missing (Jikan's filler flag disagreed with our
+4-way taxonomy; MangaDex lost its English chapters; neither tracks summaries).
+`scripts/fetch-fandom.mjs` scrapes the `{{Chapter Box}}`/`{{Episode Box}}` title
+and the `==Short Summary==` section, batched 50 pages/request, into
+`data/<kind>/<block>.json` (100 units per block). This stays **reference data in
+git**, lazy-loaded per arc — *not* the database, which still holds only user
+progress. The classification taxonomy is unaffected: it's still the `ARCS` data,
+never the wiki's flags. There's no filler/mixed concept on the manga side — it's
 the source material, 100% canon by definition.
+
+Titles/summaries are **spoilers**: the Log Book and panel show a unit's title
+only for units you've reached or with the spoiler shield off, same rule as
+`isShielded`. Clicking a unit's title opens its full summary (behind a reveal
+veil when it's ahead of you).
 
 ### Updating it — see the block comment above `ARCS`
 
@@ -276,8 +293,11 @@ with a "No image yet" placeholder; both are gone. If images come back, they
 ship with the chart (an `img` field on island data, curated), **never**
 user-supplied — do not add an upload field.
 
-No titles — episode or chapter — anywhere, and do not bulk-copy scraped
-databases into the repo. See the Data section for why.
+Titles + short summaries live in `data/<kind>/<block>.json`, scraped from the
+fandom MediaWiki API by `scripts/fetch-fandom.mjs` (see the Data section). Weekly
+update is just `npm run fetch:chapters` / `npm run fetch:episodes` — the script
+auto-detects the newest stored unit and fetches onward. Do not hand-edit those
+files or bulk-copy other scraped databases into the repo.
 
 ---
 
