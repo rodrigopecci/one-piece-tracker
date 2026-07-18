@@ -60,8 +60,8 @@ a 4000×2400 rectangle:
 - The four **Blues** are the four quadrants those two lines cut the world into.
 
 Therefore: **Paradise** is between the two Red Line crossings, and the **New
-World** is the wrap-around half — which puts Laugh Tale a stone's throw from
-Reverse Mountain, where it belongs.
+World** is the wrap-around half — which puts Elbaf, the current frontier of the
+route, back around near Reverse Mountain where the voyage began.
 
 Because it's a cylinder, the map **pans around forever** — scroll off the New
 World and Paradise comes back in. This is real, not faked: everything
@@ -147,11 +147,14 @@ you nags separately rather than hijacking the compass.
 "Where you are" is the **furthest** island you have reached — not the furthest
 unbroken one. Skip Little Garden and you are still at Drum.
 
-**3. Nothing is connected to Laugh Tale.**
+**3. The map charts only what the story has reached. It ends at Elbaf.**
 
-Nobody knows what comes after Elbaf. The route stops at Elbaf. Laugh Tale sits on
-the map, unreached and unlinked. Do not draw a line there. When a user catches up,
-the Log Pose reads "Nowhere left to sail" rather than inventing a heading.
+Nobody knows what comes after Elbaf, so nothing after it is drawn — not Laugh
+Tale, not Lodestar Island, not a line into the unknown. Only confirmed, reached
+places are on the chart. (Laugh Tale and Lodestar were briefly added and then
+removed for exactly this reason: the crew hasn't been there, so neither has the
+map.) When a user catches up, the Log Pose reads "Nowhere left to sail" —
+`here.n` resolves to Elbaf, the furthest stop — rather than inventing a heading.
 
 ---
 

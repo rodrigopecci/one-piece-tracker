@@ -112,13 +112,7 @@ const CANON_ISLANDS = [
   {id:'elbaf', n:'Elbaf', x:440, y:1265, sea:'newworld', type:'island', major:true,
    b:'The village of the giants, where disputes are settled by combat and the god of war is watching.',
    lore:'The fabled warrior nation of the giants, where every quarrel is laid before Elbaf’s god of war and settled by strength alone. To smaller folk it is a name out of childhood stories.'},
-  {id:'laugh-tale', n:'Laugh Tale', x:820, y:1185, sea:'newworld', type:'landmark', major:true,
-   b:'The final island. One crew has reached it. What they found there started everything.',
-   lore:'The island at the very end of the Grand Line, found only by one who has gathered the whole story of the world. A single crew reached it long ago, laughed at what waited, and gave it its name.'},
 
-  {id:'lodestar', n:'Lodestar Island', x:650, y:1215, sea:'newworld', type:'landmark', major:true,
-   b:'The last island an ordinary compass can find, and the final marker before the end of the world.',
-   lore:'Where the sea’s magnetic pull simply runs out. Beyond here the way onward can be read by no ordinary Log Pose — only by those who have already gathered everything the world was hiding.'},
   {id:'rusukaina', n:'Rusukaina', x:2540, y:1440, sea:'paradise', type:'island',
    b:'A brutal, uninhabited island near Amazon Lily — the empty kingdom where only the strong survive.',
    lore:'No people live here, only five hundred beasts fiercer than any human, across an island of forty-eight shifting seasons. It is where a warrior goes to be broken down and rebuilt, with nothing to lean on but themselves.'},
@@ -480,8 +474,9 @@ function buildStops(med){
       if (chunk.length) out.push({island: isl, arc, units: chunk});
     });
   });
-  // Laugh Tale is deliberately NOT a stop. Nobody knows what comes after Elbaf,
-  // so the chart doesn't draw a line there and pretend that it does.
+  // The route deliberately ends at Elbaf. Nobody knows what comes after it, so
+  // the chart charts nothing beyond — no Laugh Tale, no Lodestar, no line into
+  // the unknown — until the story actually gets there.
   return out;
 }
 let STOPS = buildStops('anime');
