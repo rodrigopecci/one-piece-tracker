@@ -1608,10 +1608,11 @@ function select(id, fly){
     document.getElementById('ipLabel').textContent = `${isFiller ? 'Filler ' : ''}${unitWord()}s here`;
     const pct = doneHere / useUnits.length * 100;
     document.getElementById('ipCount').textContent = `${doneHere} / ${useUnits.length} · ${Math.round(pct)}%`;
-    requestAnimationFrame(() => {
-      // floor a nonzero fraction to a visible sliver so "1 of 48" still reads as started
-      document.getElementById('ipBar').style.width = doneHere ? `${Math.max(pct, 5)}%` : '0%';
-    });
+    // Set the width synchronously. Deferring it to requestAnimationFrame left the
+    // fill stuck at 0 on iOS Safari when the panel first revealed (the count text,
+    // set synchronously, updated fine — the rAF width never took). Floor a nonzero
+    // fraction to a visible sliver so "1 of 48" still reads as started.
+    document.getElementById('ipBar').style.width = doneHere ? `${Math.max(pct, 5)}%` : '0%';
   } else {
     prog.style.display = 'none';
     document.getElementById('ipBar').style.width = '0%';
