@@ -350,7 +350,11 @@
     border-bottom:1px solid rgba(211,160,60,.2);padding:13px 0;margin-bottom:14px;}
   .meta dt{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:rgba(239,230,210,.5);}
   .meta dd{margin:0;font-size:13px;}
-  .blurb{font-size:14px;line-height:1.62;color:rgba(239,230,210,.86);margin:0 0 18px;}
+  .blurb{font-size:14px;line-height:1.62;color:rgba(239,230,210,.86);margin:0 0 14px;}
+  .lore{font-size:12.5px;line-height:1.66;color:rgba(239,230,210,.6);margin:0 0 18px;padding-top:13px;
+    border-top:1px solid rgba(211,160,60,.16);}
+  .lore::before{content:"Lore";display:block;font-family:var(--mono);font-size:9px;letter-spacing:.22em;
+    text-transform:uppercase;color:var(--brass);opacity:.75;margin-bottom:7px;}
   .veil{border:1px dashed rgba(95,166,188,.4);background:rgba(95,166,188,.06);border-radius:2px;padding:14px;margin-bottom:18px;}
   .veil p{margin:0 0 10px;font-size:13px;color:rgba(239,230,210,.7);line-height:1.55;}
   .veil button{background:none;border:1px solid rgba(211,160,60,.4);color:var(--brass-lite);font-family:var(--mono);
@@ -523,6 +527,7 @@
           </div>
           <div class="anch" id="anch" style="display:none"></div>
           <p class="blurb" id="pBlurb">—</p>
+          <p class="lore" id="pLore" style="display:none">—</p>
         </div>
       </div>
     </aside>
@@ -625,6 +630,6 @@
 
 <!-- Bump ?v= whenever app.js changes, so GitHub Pages' 10-min asset cache can't
      serve a stale app.js against a fresh index.html (see CLAUDE.md → Deploy). -->
-<script type="module" src="app.js?v=4"></script>
+<script type="module" src="app.js?v=5"></script>
 </body>
 </html>
