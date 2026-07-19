@@ -1223,7 +1223,12 @@ document.getElementById('voyageExpand').onclick = () => setVoyageCollapsed(false
    left out of the average. Otherwise importing 400 episodes on your first
    day would have the app claim you watch 400 a day.
    ============================================================ */
-const BULK = 25;
+/* A day with more than this many marks is treated as data entry / a catch-up
+   import, not viewing, and excluded from the pace average — otherwise importing
+   400 episodes would claim you watch 400 a day. 40 is a heavy-but-real binge
+   ceiling (a genuine One Piece binge still counts; a hundreds-strong import
+   doesn't). */
+const BULK = 40;
 const dayKey = d => new Date(d).toISOString().slice(0,10);
 function recordProgress(n){
   if (n <= 0) return;
@@ -1235,7 +1240,7 @@ function pace(){
   const h = state.history[medium()] || {};
   const cutoff = Date.now() - 30*864e5;
   const days = Object.entries(h).filter(([k,v]) => new Date(k).getTime() >= cutoff && v > 0 && v <= BULK);
-  if (days.length < 3) return null;
+  if (days.length < 2) return null;
   const total = days.reduce((n,[,v]) => n + v, 0);
   const t = days.map(([k]) => new Date(k).getTime());
   const span = Math.max(1, Math.round((Math.max(...t) - Math.min(...t)) / 864e5) + 1);
@@ -1250,16 +1255,20 @@ function humanEta(days){
 function renderPace(){
   const p = pace();
   const v = document.getElementById('paceV'), s = document.getElementById('paceS');
+  const word = unitWord();
   const remaining = totalUnits(medium()) - countedSeen(medium());
-  if (!p){
-    v.textContent = 'Not enough to go on yet';
-    s.textContent = `Mark a few ${unitWord()}s across a few days and your pace will show up here.`;
-  } else if (remaining <= 0){
-    v.textContent = 'You are current.';
-    s.textContent = `${p.toFixed(1)} ${unitWord()}s a day while you were catching up.`;
+  if (remaining <= 0){
+    v.textContent = 'All caught up';
+    s.textContent = p ? `You averaged ${p.toFixed(1)} ${word}s a day getting here.`
+                      : `You've reached the frontier — nowhere left to sail.`;
+  } else if (p){
+    v.textContent = `${p.toFixed(1)} ${word}s a day`;
+    s.textContent = `${remaining.toLocaleString()} to go · finish in ${humanEta(remaining/p)}`;
   } else {
-    v.textContent = `${p.toFixed(1)} ${unitWord()}s a day — current in ${humanEta(remaining/p)}`;
-    s.textContent = `${remaining} ${unitWord()}s to go · from your last 30 days`;
+    // No viewing pace yet (fresh, or only big catch-up days) — still show the
+    // useful number instead of a dead end.
+    v.textContent = `${remaining.toLocaleString()} ${word}s to go`;
+    s.textContent = `Mark a couple of days of watching and I’ll estimate your finish date.`;
   }
 }
 

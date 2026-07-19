@@ -280,9 +280,16 @@ is the strongest unbuilt idea. Still on the table.
 ## Pace: the one non-obvious algorithm
 
 A day where the user ticked a huge block is **data entry, not viewing**, and is
-excluded from the average (`BULK = 25`). Otherwise importing 400 episodes on day
-one would have the app claim they watch 400 a day. Needs 3 active days before it
-will guess at all.
+excluded from the average (`BULK = 40` — a heavy-but-real binge still counts; a
+hundreds-strong import doesn't). Otherwise importing 400 episodes on day one
+would have the app claim they watch 400 a day. Needs **2 active days** before it
+estimates a pace.
+
+When there isn't a pace yet (fresh, or only big catch-up days), the card doesn't
+dead-end — it shows the **remaining count** ("1,068 episodes to go") and invites
+a couple of real viewing days. This matters because a pure bulk-marker genuinely
+has no *viewing* pace to measure, so "X to go" is the honest, useful thing to
+show instead of "not enough".
 
 ---
 
