@@ -1175,8 +1175,12 @@ function renderQuickLog(){
   const shielded = islandId ? isShielded(islandId) : true;
   K.textContent = 'Next up';
   V.textContent = `${med==='anime' ? 'Ep.' : 'Ch.'} ${u}`;
-  C.textContent = shielded || !arc ? 'Uncharted waters ahead'
-    : islandId ? `${arc.n} · ${byId[islandId].n}` : arc.n;
+  // Title, spoiler-gated like everywhere else — the next unit is unwatched, so it
+  // only shows with the shield off. Lazy-load its block, then re-render.
+  ensureContent(med, u, u, renderQuickLog);
+  const info = unitInfo(med, u);
+  document.getElementById('qlogT').textContent = (info && unitRevealed(med, u)) ? info.t : '';
+  C.textContent = shielded || !arc ? 'Uncharted waters ahead' : arc.n;   // arc only — no duplicate island name
   mark.disabled = false;
   mark.textContent = `✓ Mark watched`;
 }
@@ -1188,28 +1192,6 @@ document.getElementById('qlogMark').onclick = () => {
   recordProgress(1);
   commit();                          // re-renders map, book, crew, pose + quick-log
 };
-function quickJumpTo(n){
-  const med = medium();
-  const last = med === 'anime' ? LAST_EP : LAST_CH;
-  n = Math.max(1, Math.min(last, Math.floor(n)));
-  if (!Number.isFinite(n)) return;
-  const skipFiller = med === 'anime' && !state.settings.countFiller;
-  let added = 0;
-  for (let u = 1; u <= n; u++){
-    if (skipFiller && isFillerEp(u)) continue;       // catching up canon-only when you skip filler
-    if (!seen[med].has(u)){ seen[med].add(u); added++; }   // additive — never unmarks
-  }
-  recordProgress(added);
-  document.getElementById('qlogInput').value = '';
-  commit();
-};
-document.getElementById('qlogGo').onclick = () => {
-  const v = parseInt(document.getElementById('qlogInput').value, 10);
-  if (!isNaN(v)) quickJumpTo(v);
-};
-document.getElementById('qlogInput').addEventListener('keydown', e => {
-  if (e.key === 'Enter'){ e.preventDefault(); document.getElementById('qlogGo').click(); }
-});
 
 /* collapse / expand the bottom-left voyage HUD (Next up + Log Pose), remembered */
 const applyVoyageCollapsed = () => document.body.classList.toggle('voyage-collapsed', !!state.settings.voyageCollapsed);
