@@ -361,9 +361,9 @@
     border-top:1px solid rgba(211,160,60,.16);}
   .lore::before{content:"Lore";display:block;font-family:var(--mono);font-size:9px;letter-spacing:.22em;
     text-transform:uppercase;color:var(--brass);opacity:.75;margin-bottom:7px;}
-  /* "Now reading/watching" — the current unit, in the island panel */
-  .nowread{border:1px solid rgba(211,160,60,.25);border-radius:3px;padding:11px 12px;margin:0 0 16px;
-    background:rgba(211,160,60,.05);}
+  /* "Next to watch/read" — the current unit, in the island panel. No outer
+     border/padding; only the episode-info tile inside it is bordered. */
+  .nowread{margin:0 0 16px;}
   .nowread .nr-hd{font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;
     color:var(--brass);margin-bottom:8px;}
   .nr-unit{display:block;width:100%;text-align:left;background:rgba(233,220,192,.05);cursor:pointer;
@@ -539,15 +539,15 @@
             <div class="hd"><b id="ipLabel">Episodes here</b><span id="ipCount">0 / 0</span></div>
             <div class="pbar"><i id="ipBar"></i></div>
           </div>
-          <button class="sailbtn" id="sailbtn">Sail here</button>
           <div class="nowread" id="nowRead" style="display:none">
-            <div class="nr-hd" id="nrLabel">Up next here</div>
+            <div class="nr-hd" id="nrLabel">Next to watch</div>
             <button class="nr-unit" id="nrUnit">
               <span class="nr-n" id="nrN">Ch. —</span>
               <span class="nr-t" id="nrT">—</span>
             </button>
-            <button class="sailbtn nr-mark" id="nrMark">Mark read &amp; go to next</button>
+            <button class="sailbtn nr-mark" id="nrMark">Mark watched &amp; go to next</button>
           </div>
+          <button class="sailbtn" id="sailbtn">Sail here</button>
           <dl class="meta">
             <dt>Sea</dt><dd id="pSea">—</dd>
             <dt>Arc</dt><dd id="pArc">—</dd>
@@ -680,6 +680,6 @@
 
 <!-- Bump ?v= whenever app.js changes, so GitHub Pages' 10-min asset cache can't
      serve a stale app.js against a fresh index.html (see CLAUDE.md → Deploy). -->
-<script type="module" src="app.js?v=13"></script>
+<script type="module" src="app.js?v=14"></script>
 </body>
 </html>

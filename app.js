@@ -1466,7 +1466,7 @@ function fillUnitModal(){
     commit(); fillUnitModal();
   };
   const thr = document.getElementById('umThrough');
-  thr.textContent = `Set my progress to ${unitTag(med, u)}`;
+  thr.textContent = `Mark everything up to ${unitTag(med, u)}`;
   thr.onclick = () => { markThrough(u); fillUnitModal(); };
 }
 document.getElementById('umReveal').onclick = () => { umReveal = true; fillUnitModal(); };
@@ -1480,7 +1480,7 @@ function renderNowReading(isle, useUnits, shielded){
   box.style.display = '';
   ensureContent(med, cur, cur, () => { if (selected === isle.id) renderNowReading(isle, useUnits, isShielded(isle.id)); });
   const c = unitInfo(med, cur), revealed = unitRevealed(med, cur);
-  document.getElementById('nrLabel').textContent = med === 'anime' ? 'Up next to watch' : 'Up next to read';
+  document.getElementById('nrLabel').textContent = med === 'anime' ? 'Next to watch' : 'Next to read';
   document.getElementById('nrN').textContent = unitTag(med, cur);
   document.getElementById('nrT').textContent = (revealed && c) ? c.t
     : c ? 'Hidden — spoiler shield is on'
@@ -1621,10 +1621,12 @@ function renderBook(){
 }
 
 function markThrough(u){
-  const all = arcsFor(medium()).flatMap(a => unitsOf(a, medium())).sort((a,b)=>a-b);
+  // Additive: mark everything up to u, and never unmark what's already beyond it.
+  // Progress is a union (same as the quick-log jump and the cross-device merge);
+  // clearing here used to silently wipe progress past an earlier-clicked unit.
   const before = seen[medium()].size;
-  seen[medium()].clear();
-  for (const x of all) if (x <= u) seen[medium()].add(x);
+  for (const a of arcsFor(medium()))
+    for (const x of unitsOf(a, medium())) if (x <= u) seen[medium()].add(x);
   recordProgress(Math.max(0, seen[medium()].size - before));
   commit();
 }
@@ -1725,6 +1727,7 @@ function select(id, fly){
   }
 
   sailbtn.className = 'sailbtn' + (isFiller ? ' fil' : '');
+  sailbtn.style.display = shielded ? 'none' : '';   // an unreached island stays a secret — don't leak its range
   sailbtn.onclick = null;
   const last = useUnits.length ? useUnits[useUnits.length - 1] : null;
   const w = medium() === 'anime' ? 'ep.' : 'ch.';
