@@ -2047,23 +2047,57 @@ function diffRemoved(){
 }
 
 let syncWarned = false;
-async function pushRemote(){
-  if (!supabase || !state.user?.id) return;
+
+async function fetchRemote(){
+  const { data, error } = await supabase.from('progress').select('*').eq('user_id', state.user.id).maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+/* Union a fetched remote row into local state. Progress is additive, so this
+   can't lose a tick; unticks win by timestamp (mergeSeen). Settings only when
+   explicitly adopting them. Returns whether the union changed what's watched. */
+function mergeRemoteRow(data, applySettings){
+  if (!data) return false;
+  const before = seen.anime.size + seen.manga.size;
+  const remoteUpdatedAt = new Date(data.updated_at).getTime();
+  seen.anime = mergeSeen(seen.anime, fromRanges(data.anime_ranges), state.removed.anime, data.removed?.anime||{}, remoteUpdatedAt);
+  seen.manga = mergeSeen(seen.manga, fromRanges(data.manga_ranges), state.removed.manga, data.removed?.manga||{}, remoteUpdatedAt);
+  state.history = mergeHistory(state.history, data.history);
+  for (const med of ['anime','manga'])
+    state.removed[med] = pruneRemoved({ ...(data.removed?.[med]||{}), ...state.removed[med] });
+  if (applySettings && data.settings) Object.assign(state.settings, data.settings);
+  return (seen.anime.size + seen.manga.size) !== before;
+}
+
+async function upsertLocal(){
   diffRemoved();
   pruneRemoved(state.removed.anime); pruneRemoved(state.removed.manga);
+  const { error } = await supabase.from('progress').upsert({
+    user_id: state.user.id,
+    anime_ranges: toRanges(seen.anime),
+    manga_ranges: toRanges(seen.manga),
+    history: state.history,
+    settings: state.settings,
+    removed: state.removed,
+    updated_at: new Date().toISOString(),
+  }, { onConflict: 'user_id' });
+  if (error) throw error;
+  lastSyncedSeen = {anime:new Set(seen.anime), manga:new Set(seen.manga)};
+}
+
+/* Background sync is READ-MERGE-WRITE, never a blind overwrite: fetch what the
+   DB currently has, union it into local, then save the union. This is what stops
+   a stale tab left open on another device from clobbering newer progress — the
+   bug that reverted a phone's worth of "watched" marks. If the union pulled in
+   changes from elsewhere, refresh the views so they appear. */
+async function pushRemote(){
+  if (!supabase || !state.user?.id) return;
   try {
-    const { error } = await supabase.from('progress').upsert({
-      user_id: state.user.id,
-      anime_ranges: toRanges(seen.anime),
-      manga_ranges: toRanges(seen.manga),
-      history: state.history,
-      settings: state.settings,
-      removed: state.removed,
-      updated_at: new Date().toISOString(),
-    }, { onConflict: 'user_id' });
-    if (error) throw error;
-    lastSyncedSeen = {anime:new Set(seen.anime), manga:new Set(seen.manga)};
+    const changed = mergeRemoteRow(await fetchRemote(), false);
+    await upsertLocal();
     syncWarned = false;
+    if (changed){ persist(); refreshViews(); }
   } catch (e){
     // Don't fail silently — a broken cloud save is exactly what destroys trust.
     console.error('Grand Line Chart — cloud save failed:', e?.message || e);
@@ -2088,26 +2122,16 @@ function mergeHistory(a, b){
 
 /* applySettings: adopt the account's saved settings too (used on an explicit
    sign-in — that's when you want "my settings from my other device"). On a
-   plain reload we only merge progress, so we never clobber a setting you just
-   changed on this device. */
+   plain reload/focus we only merge progress, so we never clobber a setting you
+   just changed on this device. */
 async function pullAndMerge({ applySettings = false } = {}){
   if (!supabase || !state.user?.id) return;
   try {
-    const { data, error } = await supabase.from('progress').select('*').eq('user_id', state.user.id).maybeSingle();
-    if (error) throw error;
-    if (data){
-      const remoteUpdatedAt = new Date(data.updated_at).getTime();
-      seen.anime = mergeSeen(seen.anime, fromRanges(data.anime_ranges), state.removed.anime, data.removed?.anime||{}, remoteUpdatedAt);
-      seen.manga = mergeSeen(seen.manga, fromRanges(data.manga_ranges), state.removed.manga, data.removed?.manga||{}, remoteUpdatedAt);
-      state.history = mergeHistory(state.history, data.history);
-      for (const med of ['anime','manga'])
-        state.removed[med] = pruneRemoved({ ...(data.removed?.[med]||{}), ...state.removed[med] });
-      if (applySettings && data.settings) Object.assign(state.settings, data.settings);
-    }
+    mergeRemoteRow(await fetchRemote(), applySettings);
+    lastSyncedSeen = {anime:new Set(seen.anime), manga:new Set(seen.manga)};
+    persist();
+    await upsertLocal();          // write the merged result back (safe: local now ⊇ remote)
   } catch (e){ console.error('Grand Line Chart — cloud load failed:', e?.message || e); }
-  lastSyncedSeen = {anime:new Set(seen.anime), manga:new Set(seen.manga)};
-  persist();
-  await pushRemote();
 }
 
 function setupAuth(){
@@ -2148,9 +2172,34 @@ function setupAuth(){
 function flushSync(){
   clearTimeout(saveTimer);
   try { localStorage.setItem(KEY, snapshot()); } catch {}
-  if (supabase && state.user?.id){ clearTimeout(remoteTimer); pushRemote(); }
+  if (supabase && state.user?.id){ clearTimeout(remoteTimer); pushRemote(); }   // merge-write: safe even from a stale tab
 }
-document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushSync(); });
+
+/* Re-render everything a progress change touches — shared by the focus/background
+   syncs so freshly-merged data from another device actually shows up. */
+function refreshViews(){
+  rebuildStops(); buildRoute();
+  renderBook(); renderCrew(); renderQuickLog();
+  if (selected) select(selected, false);
+  draw();
+}
+
+/* Coming back to a tab that's been open in the background: pull the latest from
+   the DB and merge it in, so an idle tab doesn't sit on stale progress (and
+   then risk pushing it). */
+let syncingDown = false;
+async function syncDownOnFocus(){
+  if (!supabase || !state.user?.id || syncingDown) return;
+  syncingDown = true;
+  try { await pullAndMerge(); refreshViews(); }
+  finally { syncingDown = false; }
+}
+
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') flushSync();
+  else syncDownOnFocus();
+});
+window.addEventListener('focus', syncDownOnFocus);
 window.addEventListener('pagehide', flushSync);
 
 function commit(){
