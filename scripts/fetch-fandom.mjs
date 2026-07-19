@@ -36,7 +36,7 @@ const PAUSE_MS = 400;           // be polite between batches
 
 const KINDS = {
   chapter: { prefix: 'Chapter_', dir: 'data/chapters', box: 'Chapter Box', title: ['title', 'ename'] },
-  episode: { prefix: 'Episode_', dir: 'data/episodes', box: 'Episode Box', title: ['crunchyTitle', 'Translation'] },
+  episode: { prefix: 'Episode_', dir: 'data/episodes', box: 'Episode Box', title: ['Translation', 'crunchyTitle'] },
 };
 
 /* ---------- CLI ---------- */
@@ -122,6 +122,7 @@ function stripMarkup(s){
   t = t.replace(/\[https?:\/\/\S+\s+([^\]]*)\]/g, '$1');    // [url text] -> text
   t = t.replace(/\[https?:\/\/\S+\]/g, '');
   t = t.replace(/'''''|'''|''/g, '');                       // bold/italic
+  t = t.replace(/<br\s*\/?>/gi, ' ');                        // line breaks -> space (don't glue words)
   t = t.replace(/<[^>]+>/g, '');                            // stray HTML tags
   t = t.replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&quot;/g, '"')
        .replace(/&#39;|&apos;/g, "'").replace(/&mdash;/g, '—').replace(/&ndash;/g, '–')
@@ -151,20 +152,31 @@ async function apiGet(params, tries = 4){
   }
 }
 
-// Fetch a batch of numbers -> { num: {title, summary} | null(missing/invalid) }.
+/* Fetch a batch of numbers. Returns num -> {t,s} (valid) | null (page exists but
+   has no title/summary) | absent (page genuinely missing).
+   The API caps how much page *content* it returns per request, so a 50-page
+   batch of long pages comes back partial with a `continue` token — we follow it
+   until every existing page's content has arrived. Without this, later pages in
+   a batch look "missing" and a naive loop stops early. */
 async function fetchBatch(nums, cfg){
-  const titles = nums.map(n => cfg.prefix + n).join('|');
-  const data = await apiGet({
+  const base = {
     action: 'query', prop: 'revisions', rvslots: 'main', rvprop: 'content',
-    titles, format: 'json', formatversion: '2', maxlag: '5',
-  });
+    titles: nums.map(n => cfg.prefix + n).join('|'),
+    format: 'json', formatversion: '2', maxlag: '5',
+  };
   const out = {};
-  for (const page of data?.query?.pages || []){
-    const num = parseInt((page.title.match(/(\d+)/) || [])[1], 10);
-    if (!num) continue;
-    if (page.missing || !page.revisions?.[0]?.slots?.main?.content){ out[num] = null; continue; }
-    out[num] = parsePage(page.revisions[0].slots.main.content, cfg);
-  }
+  let cont = {};
+  do {
+    const data = await apiGet({ ...base, ...cont });
+    for (const page of data?.query?.pages || []){
+      const num = parseInt((page.title.match(/(\d+)/) || [])[1], 10);
+      if (!num || page.missing) continue;               // leave absent => "missing"
+      const c = page.revisions?.[0]?.slots?.main?.content;
+      if (c) out[num] = parsePage(c, cfg);              // fill it (parsePage may return null = invalid)
+      // no content this round: a continue round carries it
+    }
+    cont = data.continue || null;
+  } while (cont);
   return out;
 }
 
@@ -173,10 +185,11 @@ function parsePage(wt, cfg){
   const fields = tpl ? parseFields(tpl) : {};
   let title = '';
   for (const f of cfg.title){ if (fields[f]){ title = stripMarkup(fields[f]); if (title) break; } }
+  if (!title) return null;                 // no title → not a real content page (missing/future stub)
+  // Some pages have a title but only an {{Empty section}} placeholder summary
+  // (older filler episodes) — keep the title, just omit the empty summary.
   const summary = stripMarkup(extractSection(wt, 'Short Summary'));
-  // Only valid if we got both — guards against placeholder/future stub pages.
-  if (!title || !summary) return null;
-  return { t: title, s: summary };
+  return summary ? { t: title, s: summary } : { t: title };
 }
 
 /* ---------- block storage ---------- */
@@ -195,16 +208,45 @@ async function writeBlock(dir, block, obj){
   await writeFile(join(ROOT, dir, `${block}.json`), `{\n${body}\n}\n`);
 }
 
-async function maxStored(dir){
+async function storedKeys(dir){
   const abs = join(ROOT, dir);
-  if (!existsSync(abs)) return 0;
-  let max = 0;
+  const keys = new Set(); let max = 0;
+  if (!existsSync(abs)) return { keys, max };
   for (const f of await readdir(abs)){
     if (!f.endsWith('.json')) continue;
-    const obj = JSON.parse(await readFile(join(abs, f), 'utf8'));
-    for (const k of Object.keys(obj)) max = Math.max(max, Number(k));
+    for (const k of Object.keys(JSON.parse(await readFile(join(abs, f), 'utf8')))){
+      const n = Number(k); keys.add(n); if (n > max) max = n;
+    }
   }
-  return max;
+  return { keys, max };
+}
+const maxStored = async dir => (await storedKeys(dir)).max;
+
+// A big batch can occasionally drop a page (the API's per-request content cap),
+// leaving a sub-max gap. Re-fetch gaps in tiny batches, which never hit the cap
+// — so a full run always self-heals to contiguous. Returns how many were fixed.
+async function repairGaps(cfg){
+  const { keys, max } = await storedKeys(cfg.dir);
+  const gaps = [];
+  for (let i = 1; i <= max; i++) if (!keys.has(i)) gaps.push(i);
+  if (!gaps.length) return 0;
+  console.log(`\nrepairing ${gaps.length} gap(s): ${gaps.slice(0, 25).join(', ')}${gaps.length > 25 ? ' …' : ''}`);
+  const blocks = new Map();
+  const getBlock = async b => { if (!blocks.has(b)) blocks.set(b, await loadBlock(cfg.dir, b)); return blocks.get(b); };
+  let fixed = 0;
+  for (let i = 0; i < gaps.length; i += 5){
+    const chunk = gaps.slice(i, i + 5);
+    const got = await fetchBatch(chunk, cfg);
+    for (const num of chunk){
+      const rec = got[num];
+      if (!rec) continue;                              // still missing/invalid → genuinely absent (stub)
+      (await getBlock(blockOf(num)))[String(num)] = rec; fixed++;
+    }
+    for (const [b, obj] of blocks) await writeBlock(cfg.dir, b, obj);
+    await sleep(PAUSE_MS);
+  }
+  console.log(`repaired ${fixed}/${gaps.length}.`);
+  return fixed;
 }
 
 /* ---------- main ---------- */
@@ -214,8 +256,7 @@ async function main(){
   const existingMax = await maxStored(cfg.dir);
 
   const from = args.from ?? (args.all ? 1 : existingMax + 1);
-  const openEnded = args.to == null && !args.all ? true : args.all && args.to == null;
-  const to = args.to ?? Infinity;   // open-ended: stop at first missing/invalid page
+  const to = args.to ?? Infinity;   // open-ended: runs until a whole batch comes back empty
 
   console.log(`\n${args.kind}s: ${cfg.dir} (currently up to ${existingMax})`);
   console.log(`fetching from ${from}${to === Infinity ? ' until the wiki runs out' : ` to ${to}`}` +
@@ -231,20 +272,24 @@ async function main(){
     process.stdout.write(`  ${base}..${hi} … `);
     const got = await fetchBatch(nums, cfg);
 
-    let n = 0;
+    let n = 0, valid = 0;
     for (const num of nums){
       const rec = got[num];
-      if (rec === undefined || rec === null){       // missing/invalid → end of contiguous run
-        if (to === Infinity){ done = true; break; }
-        console.warn(`\n    ! ${cfg.prefix}${num} missing/invalid — skipped`);
+      if (rec === undefined) continue;               // missing here — repairGaps() will retry it
+      if (rec === null){                             // exists but no title/summary → skip (stub)
+        console.warn(`\n    ! ${cfg.prefix}${num} has no title/summary — skipped`);
         continue;
       }
+      valid++;
       const b = blockOf(num);
       const obj = await getBlock(b);
       if (obj[String(num)] && !args.refetch){ n++; continue; }   // keep existing unless --refetch
       obj[String(num)] = rec;
       n++; added++;
     }
+    // Open-ended run ends only when a whole batch yields nothing — a single
+    // dropped page never ends it early (that was the old bug).
+    if (to === Infinity && valid === 0) done = true;
     console.log(`${n} ok${done ? ' (reached the end)' : ''}`);
 
     // flush touched blocks each batch so a crash mid-run loses nothing
@@ -252,17 +297,14 @@ async function main(){
     if (!done && base + BATCH <= to) await sleep(PAUSE_MS);
   }
 
+  added += await repairGaps(cfg);
+
   // Guardrail: keys should tile 1..max with no gaps.
-  const max = await maxStored(cfg.dir);
-  const seen = new Set();
-  for (const f of await readdir(join(ROOT, cfg.dir))){
-    if (!f.endsWith('.json')) continue;
-    for (const k of Object.keys(JSON.parse(await readFile(join(ROOT, cfg.dir, f), 'utf8')))) seen.add(Number(k));
-  }
+  const { keys, max } = await storedKeys(cfg.dir);
   const gaps = [];
-  for (let i = 1; i <= max; i++) if (!seen.has(i)) gaps.push(i);
-  console.log(`\nAdded/updated ${added}. Stored ${seen.size} ${args.kind}s, up to ${max}.`);
-  if (gaps.length) console.warn(`⚠ gaps (not stored): ${gaps.slice(0, 40).join(', ')}${gaps.length > 40 ? ' …' : ''}`);
+  for (let i = 1; i <= max; i++) if (!keys.has(i)) gaps.push(i);
+  console.log(`\nAdded/updated ${added}. Stored ${keys.size} ${args.kind}s, up to ${max}.`);
+  if (gaps.length) console.warn(`⚠ gaps remain: ${gaps.slice(0, 40).join(', ')}${gaps.length > 40 ? ' …' : ''}`);
   else console.log('✓ contiguous 1.. no gaps.');
 }
 

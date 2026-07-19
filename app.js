@@ -1455,7 +1455,9 @@ function fillUnitModal(){
   veil.style.display = revealed ? 'none' : '';
   sum.style.display = revealed ? '' : 'none';
   if (revealed)
-    sum.textContent = c ? c.s : (loadedBlocks[med].has(Math.floor(u / 100)) ? 'No summary available.' : 'Loading…');
+    sum.textContent = (c && c.s) ? c.s
+      : c ? 'No summary written for this one yet.'
+      : (loadedBlocks[med].has(Math.floor(u / 100)) ? 'No summary available.' : 'Loading…');
   const mark = document.getElementById('umMark'), has = seen[med].has(u);
   mark.textContent = has ? '✓ Marked — tap to unmark' : `Mark ${med === 'anime' ? 'watched' : 'read'}`;
   mark.onclick = () => {
