@@ -52,7 +52,7 @@ const CANON_ISLANDS = [
   {id:'jaya', n:'Jaya', x:1975, y:1150, sea:'paradise', type:'island', major:true,
    b:'Half an island. The other half was carried into the sky four hundred years ago.',
    lore:'What remains is a rough port of pirates, brawlers and bounty hunters. Old sailors here still trade the tall tale of a city of gold that once stood on the missing half.'},
-  {id:'skypiea', n:'Skypiea', x:1975, y:700, sea:'paradise', type:'sky', major:true,
+  {id:'skypiea', n:'Skypiea', x:1975, y:930, sea:'paradise', type:'sky', major:true,
    b:'A country in the clouds above Jaya, ruled by a self-declared god, built on a missing city of gold.',
    lore:'Reached only by a freak column of rising sea, a serene white land on the clouds. Its one harsh law: everything on the sacred ground belongs to God, and trespassers are judged without appeal.'},
   {id:'long-ring', n:'Long Ring Long Land', x:2170, y:1268, sea:'paradise', type:'island',
