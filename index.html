@@ -400,6 +400,7 @@
     .bar{gap:8px;padding:8px 10px;}
     .acct{order:1;margin-left:auto;}
     .avatar .who{display:none;}
+    .avatar{padding:4px;gap:0;}   /* username hidden → symmetric circle around the disc */
     .bar::after{content:"";flex-basis:100%;height:0;order:2;}  /* force the row break */
     .medium{order:3;flex:none;}
     .filters{order:4;flex:1;min-width:0;margin-left:0;flex-wrap:nowrap;overflow-x:auto;
@@ -679,6 +680,6 @@
 
 <!-- Bump ?v= whenever app.js changes, so GitHub Pages' 10-min asset cache can't
      serve a stale app.js against a fresh index.html (see CLAUDE.md → Deploy). -->
-<script type="module" src="app.js?v=12"></script>
+<script type="module" src="app.js?v=13"></script>
 </body>
 </html>
