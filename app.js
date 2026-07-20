@@ -52,7 +52,7 @@ const CANON_ISLANDS = [
   {id:'jaya', n:'Jaya', x:1975, y:1150, sea:'paradise', type:'island', major:true,
    b:'Half an island. The other half was carried into the sky four hundred years ago.',
    lore:'What remains is a rough port of pirates, brawlers and bounty hunters. Old sailors here still trade the tall tale of a city of gold that once stood on the missing half.'},
-  {id:'skypiea', n:'Skypiea', x:1975, y:930, sea:'paradise', type:'sky', major:true,
+  {id:'skypiea', n:'Skypiea', x:2080, y:1115, sea:'paradise', type:'sky', major:true,
    b:'A country in the clouds above Jaya, ruled by a self-declared god, built on a missing city of gold.',
    lore:'Reached only by a freak column of rising sea, a serene white land on the clouds. Its one harsh law: everything on the sacred ground belongs to God, and trespassers are judged without appeal.'},
   {id:'long-ring', n:'Long Ring Long Land', x:2170, y:1268, sea:'paradise', type:'island',
@@ -709,6 +709,7 @@ function buildMarkers(){
       'aria-label':`${isle.n}, ${SEAS[isle.sea].label}`});
     const halo = el('circle',{class:'halo',cx:wx,cy:isle.y,fill:'none',stroke:'#5FA6BC','stroke-width':.8,opacity:.14});
     const shadow = el('circle',{class:'shadow',cx:wx,cy:isle.y,fill:'url(#isleShadow)','pointer-events':'none'});
+    const cloud = el('ellipse',{class:'cloud',cx:wx,cy:isle.y,fill:'url(#isleCloud)','pointer-events':'none',opacity:0});
     const ring = el('circle',{class:'ring',cx:wx,cy:isle.y,fill:'none',stroke:'var(--brass)','stroke-width':1.3,opacity:.75});
     if (isle.type==='sky') ring.setAttribute('stroke-dasharray','2 3');
     if (isle.type==='undersea') ring.setAttribute('stroke-dasharray','5 4');
@@ -722,12 +723,12 @@ function buildMarkers(){
     const prog = el('circle',{class:'prog',cx:wx,cy:isle.y,fill:'none',stroke:'var(--voyage)',
       'stroke-linecap':'round',opacity:0,'pointer-events':'none'});
     const hit = el('circle',{class:'hit',cx:wx,cy:isle.y,fill:'transparent'});
-    g.append(halo,shadow,body,sheen,ring,prog,hit);
+    g.append(halo,shadow,cloud,body,sheen,ring,prog,hit);
     markerLayer.appendChild(g);
     const lbl = el('text',{class:'lbl'});
     lbl.textContent = isle.n;
     labelLayer.appendChild(lbl);
-    nodes[`${isle.id}#${ti}`] = {g,halo,shadow,ring,prog,body,sheen,hit,lbl,isle,wx,w100:0};
+    nodes[`${isle.id}#${ti}`] = {g,halo,shadow,cloud,ring,prog,body,sheen,hit,lbl,isle,wx,w100:0};
     g.addEventListener('click', e => { e.stopPropagation(); select(isle.id, true); });
     g.addEventListener('keydown', e => { if (e.key==='Enter'||e.key===' '){ e.preventDefault(); select(isle.id,true); } });
     g.addEventListener('pointerenter', () => { hovered = isle.id; draw(); });
@@ -818,7 +819,7 @@ function draw(){
   const visible = [], obstacles = [];
   for (const id in nodes){
     const nd = nodes[id];
-    const {isle,g,halo,shadow,ring,prog,body,sheen,hit,lbl} = nd;
+    const {isle,g,halo,shadow,cloud,ring,prog,body,sheen,hit,lbl} = nd;
 
     if (isle.type === 'filler' && !fillerShown()){ g.classList.add('gone'); lbl.style.display='none'; continue; }
     g.classList.remove('gone');
@@ -837,6 +838,16 @@ function draw(){
     shadow.setAttribute('r', br*1.55);
     shadow.setAttribute('cy', isle.y + br*0.42);
     shadow.style.opacity = isle.type==='filler' ? .5 : 1;
+    /* Sky islands (Skypiea, Weatheria) sit in the Grand Line on a 2D map, so a
+       cloud beneath — instead of a sea shadow — is the cue that they're up in
+       the clouds, not at sea level. */
+    if (isle.type==='sky'){
+      shadow.style.opacity = 0;
+      cloud.setAttribute('rx', br*3.2);
+      cloud.setAttribute('ry', br*1.7);
+      cloud.setAttribute('cy', isle.y + br*0.5);
+      cloud.style.opacity = 1;
+    } else cloud.style.opacity = 0;
     if (isle.type==='landmark'){
       const set = n => { n.setAttribute('x', nd.wx-br); n.setAttribute('y', isle.y-br);
         n.setAttribute('width', br*2); n.setAttribute('height', br*2);
