@@ -1659,6 +1659,7 @@ function setMedium(m){
   if (selected && byId[selected].type==='filler' && m==='manga') deselect();
   else if (selected) select(selected, false);
   draw();
+  if (searchInput.value.trim().length >= 2) runSearch();   // results are per-medium
 }
 mAnime.onclick = () => setMedium('anime');
 mManga.onclick = () => setMedium('manga');
@@ -1792,6 +1793,87 @@ chips.forEach(([key,label]) => {
   };
   filters.appendChild(b);
 });
+
+/* ============================================================
+   SEARCH — find an arc, episode or chapter by name, title, or summary.
+   Searching is an explicit action, so on the first query we load all of the
+   medium's title/summary blocks (~200KB gzipped, cached) and scan in memory.
+   Titles show in results because you searched for them; the full summary still
+   lives behind the unit modal's spoiler veil.
+   ============================================================ */
+const searchInput = document.getElementById('searchInput');
+const searchResults = document.getElementById('searchResults');
+let searchT;
+const closeSearch = () => searchResults.classList.remove('open');
+searchInput.addEventListener('input', () => { clearTimeout(searchT); searchT = setTimeout(runSearch, 160); });
+searchInput.addEventListener('focus', () => { if (searchInput.value.trim().length >= 2) runSearch(); });
+searchInput.addEventListener('keydown', e => { if (e.key === 'Escape'){ searchInput.value = ''; closeSearch(); searchInput.blur(); } });
+document.addEventListener('click', e => { if (!document.getElementById('search').contains(e.target)) closeSearch(); });
+
+function runSearch(){
+  const q = searchInput.value.trim().toLowerCase();
+  if (q.length < 2){ closeSearch(); searchResults.innerHTML = ''; return; }
+  const med = medium();
+  const last = med === 'anime' ? LAST_EP : LAST_CH;
+  searchResults.classList.add('open');
+  // pull every block into memory before scanning titles/summaries
+  if (!ensureContent(med, 1, last, () => { if (searchInput.value.trim().toLowerCase() === q) runSearch(); })){
+    searchResults.innerHTML = '<div class="sr-note">Loading the library…</div>';
+    return;
+  }
+
+  const uw = med === 'anime' ? 'Ep.' : 'Ch.';
+  const arcHits = [];
+  for (const arc of arcsFor(med)){
+    const isles = (arc.stops || []).map(id => byId[id]).filter(Boolean);
+    if (fillerByArc[arc.id]) isles.push(fillerByArc[arc.id]);
+    const hay = `${arc.saga} ${arc.n} ${isles.map(i => `${i.n} ${i.b || ''} ${i.lore || ''}`).join(' ')}`.toLowerCase();
+    if (hay.includes(q)){ const r = rangeOf(arc, med); arcHits.push({ arc, sub: `${arc.saga} · ${uw} ${r[0]}–${r[1]}` }); }
+  }
+  const unitHits = [];
+  for (let u = 1; u <= last; u++){
+    const c = content[med][u];
+    if (!c) continue;
+    const inTitle = c.t && c.t.toLowerCase().includes(q);
+    const inSum = c.s && c.s.toLowerCase().includes(q);
+    if (inTitle || inSum) unitHits.push({ u, t: c.t, rank: inTitle ? 0 : 1 });
+  }
+  unitHits.sort((a, b) => a.rank - b.rank || a.u - b.u);
+  renderResults(arcHits, unitHits, uw, med);
+}
+
+function renderResults(arcHits, unitHits, uw, med){
+  searchResults.innerHTML = '';
+  if (!arcHits.length && !unitHits.length){ searchResults.innerHTML = '<div class="sr-note">No matches.</div>'; return; }
+  const sec = txt => { const d = document.createElement('div'); d.className = 'sr-sec'; d.textContent = txt; searchResults.appendChild(d); };
+  const row = (t, sub, onclick) => {
+    const b = document.createElement('button'); b.className = 'sr-item';
+    const st = document.createElement('span'); st.className = 'sr-t'; st.textContent = t;
+    const ss = document.createElement('span'); ss.className = 'sr-sub'; ss.textContent = sub;
+    b.append(st, ss); b.onclick = onclick; searchResults.appendChild(b);
+  };
+  if (arcHits.length){
+    sec(`Arcs (${arcHits.length})`);
+    for (const h of arcHits) row(h.arc.n, h.sub, () => goToArc(h.arc));
+  }
+  if (unitHits.length){
+    const word = med === 'anime' ? 'Episodes' : 'Chapters';
+    const shown = unitHits.slice(0, 30);
+    sec(unitHits.length > shown.length ? `${word} (showing ${shown.length} of ${unitHits.length})` : `${word} (${unitHits.length})`);
+    for (const h of shown){
+      const arc = arcOfUnit(h.u, med);
+      row(`${uw} ${h.u} — ${h.t}`, arc ? arc.n : '', () => { closeSearch(); openUnit(h.u); });
+    }
+  }
+}
+
+function goToArc(arc){
+  closeSearch();
+  openArcs.add(arc.id);
+  setBook(true);
+  renderBook();
+  requestAnimationFrame(() => bookScroll.querySelector(`[data-arc="${arc.id}"]`)?.scrollIntoView({ block: 'center', behavior: 'smooth' }));
+}
 
 const acctBtn = document.getElementById('acctBtn'), acctMenu = document.getElementById('acctMenu');
 const acctDisc = document.getElementById('acctDisc'), acctWho = document.getElementById('acctWho');
