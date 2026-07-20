@@ -46,12 +46,12 @@
     border:1px solid rgba(211,160,60,.3);color:rgba(239,230,210,.7);padding:5px 8px;border-radius:999px;cursor:pointer;white-space:nowrap;}
   .chip[aria-pressed="true"]{background:var(--brass);border-color:var(--brass);color:#0B1A22;font-weight:500;}
 
-  .search{position:relative;flex:0 1 300px;min-width:150px;}
+  .search{position:relative;flex:0 1 320px;min-width:150px;margin-left:auto;}   /* sits on the right, next to the account */
   .search > input{width:100%;background:rgba(233,220,192,.06);border:1px solid rgba(211,160,60,.3);color:var(--paper);
     font-family:var(--body);font-size:13px;padding:7px 12px;border-radius:999px;outline:none;-webkit-appearance:none;}
   .search > input::placeholder{color:rgba(239,230,210,.42);}
   .search > input:focus{border-color:var(--brass);background:rgba(233,220,192,.1);}
-  .search-results{position:absolute;top:calc(100% + 6px);left:0;width:min(400px,calc(100vw - 24px));max-height:64vh;
+  .search-results{position:absolute;top:calc(100% + 6px);right:0;width:min(400px,calc(100vw - 24px));max-height:64vh;
     overflow-y:auto;background:#0C2B3A;border:1px solid rgba(211,160,60,.4);border-radius:4px;z-index:80;display:none;
     box-shadow:0 12px 34px rgba(0,0,0,.45);}
   .search-results.open{display:block;}
@@ -413,12 +413,7 @@
     .avatar{padding:4px;gap:0;}   /* username hidden → symmetric circle around the disc */
     .bar::after{content:"";flex-basis:100%;height:0;order:2;}  /* force the row break */
     .medium{order:3;flex:none;}
-    .filters{order:4;flex:1;min-width:0;margin-left:0;flex-wrap:nowrap;overflow-x:auto;
-      -webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:2px;}
-    .filters::-webkit-scrollbar{display:none;}
-    .chip{flex:none;}
-    .search{order:5;flex:1 1 100%;min-width:0;}     /* its own full-width row */
-    .search-results{width:100%;}
+    .search{order:4;flex:1 1 auto;min-width:0;margin-left:0;}   /* fills the rest of row 2, beside the medium toggle */
     .menu{width:min(230px,calc(100vw - 16px));}
   }
   @media (prefers-reduced-motion:reduce){*{transition:none !important;}}
@@ -441,7 +436,6 @@
         placeholder="Search titles, arcs, summaries…" aria-label="Search episodes, chapters and arcs" />
       <div class="search-results" id="searchResults" role="listbox"></div>
     </div>
-    <div class="filters" id="filters" role="group" aria-label="Filter by sea"></div>
     <div class="acct">
       <button class="avatar" id="acctBtn" aria-haspopup="menu" aria-expanded="false">
         <span class="disc" id="acctDisc">?</span><span class="who" id="acctWho">Sign in</span>
@@ -692,6 +686,6 @@
 
 <!-- Bump ?v= whenever app.js changes, so GitHub Pages' 10-min asset cache can't
      serve a stale app.js against a fresh index.html (see CLAUDE.md → Deploy). -->
-<script type="module" src="app.js?v=24"></script>
+<script type="module" src="app.js?v=25"></script>
 </body>
 </html>

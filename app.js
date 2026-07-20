@@ -634,6 +634,33 @@ TILES.forEach(dx => [RL_A,RL_B].forEach(rl => {
     t.textContent='Red Line'; lines.appendChild(t);
   });
 }));
+/* Reverse Mountain: the one way in. Four canals climb it from the four Blues and
+   pour down into the Grand Line, so we draw four inflow channels converging on
+   the mountain (arrows pointing in) and one bolder channel flowing east into
+   Paradise (arrow pointing out). Tiled with the rest so it survives the wrap. */
+function reverseMountainFlow(cx){
+  const cy = GL_Y, g = el('g', {'pointer-events':'none'});
+  const water = '#A9DDEC';
+  const arrow = (x, y, a, size, col, w, op) => {
+    const d = .55, bx = x + size*Math.cos(a+Math.PI-d), by = y + size*Math.sin(a+Math.PI-d),
+          cx2 = x + size*Math.cos(a+Math.PI+d), cy2 = y + size*Math.sin(a+Math.PI+d);
+    g.appendChild(el('path',{d:`M${bx.toFixed(1)} ${by.toFixed(1)} L${x.toFixed(1)} ${y.toFixed(1)} L${cx2.toFixed(1)} ${cy2.toFixed(1)}`,
+      fill:'none',stroke:col,'stroke-width':w,opacity:op,'stroke-linecap':'round','stroke-linejoin':'round'}));
+  };
+  [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(([sx,sy]) => {          // four Blues → in
+    const ox = cx+sx*150, oy = cy+sy*128, ix = cx+sx*50, iy = cy+sy*44;
+    g.appendChild(el('path',{d:`M${ox} ${oy} C${cx+sx*108} ${cy+sy*104} ${cx+sx*74} ${cy+sy*56} ${ix} ${iy}`,
+      fill:'none',stroke:water,'stroke-width':2.6,opacity:.5,'stroke-linecap':'round'}));
+    arrow(ix, iy, Math.atan2(cy-iy, cx-ix), 9, water, 2.4, .7);
+  });
+  g.appendChild(el('circle',{cx,cy,r:7,fill:'none',stroke:water,'stroke-width':2,opacity:.5}));
+  g.appendChild(el('circle',{cx,cy,r:2.4,fill:water,opacity:.6}));
+  g.appendChild(el('path',{d:`M${cx+42} ${cy} L${cx+188} ${cy}`,fill:'none',stroke:'#CFEAF4','stroke-width':3.6,opacity:.8,'stroke-linecap':'round'}));
+  arrow(cx+188, cy, 0, 12, '#CFEAF4', 3.2, .9);                 // → Paradise
+  return g;
+}
+TILES.forEach(dx => lines.appendChild(reverseMountainFlow(RL_A + dx)));
+
 /* Paradise sits between the two Red Line crossings; the New World is the
    wrap-around half, so its label rides the seam (x = 0 ≡ W). */
 TILES.forEach(dx => [[2000,'Paradise'],[W,'New World']].forEach(([x,txt]) => {
@@ -1780,19 +1807,8 @@ function deselect(){
 document.getElementById('pclose').onclick = deselect;
 SVG.addEventListener('click', e => { if (e.target===SVG || e.target.id==='ocean') deselect(); });
 
-const filters = document.getElementById('filters');
-const chips = [['all','All'], ...Object.entries(SEAS).map(([k,v]) => [k, v.short])];
-chips.forEach(([key,label]) => {
-  const b = document.createElement('button');
-  b.className='chip'; b.textContent=label;
-  b.setAttribute('aria-pressed', key==='all');
-  b.onclick = () => {
-    activeSea = key;
-    filters.querySelectorAll('.chip').forEach((c,i) => c.setAttribute('aria-pressed', chips[i][0]===key));
-    draw();
-  };
-  filters.appendChild(b);
-});
+/* Region filters were removed — every island stays visible. activeSea is kept
+   pinned to 'all' so the draw()/label logic that reads it is a no-op. */
 
 /* ============================================================
    SEARCH — find an arc, episode or chapter by name, title, or summary.
