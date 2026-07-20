@@ -1261,7 +1261,7 @@ function renderPace(){
     // No viewing pace yet (fresh, or only big catch-up days) — still show the
     // useful number instead of a dead end.
     v.textContent = `${remaining.toLocaleString()} ${word}s to go`;
-    s.textContent = `Mark a couple of days of watching and I’ll estimate your finish date.`;
+    s.textContent = `Mark a couple of days of ${medium()==='anime' ? 'watching' : 'reading'} and I’ll estimate your finish date.`;
   }
 }
 
