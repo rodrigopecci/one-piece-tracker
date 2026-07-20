@@ -3,74 +3,104 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
 <title>Grand Line Chart — globe prototype</title>
 <style>
-  html,body{margin:0;height:100%;background:#061821;overflow:hidden;
+  html,body{margin:0;height:100%;background:#061821;overflow:hidden;color:#EFE6D2;
     font-family:system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased;}
-  #c{display:block;touch-action:none;cursor:grab;}
-  #c:active{cursor:grabbing;}
-  .hud{position:fixed;top:12px;left:14px;color:#EFE6D2;font-size:12px;opacity:.72;
-    font-family:ui-monospace,Menlo,monospace;letter-spacing:.04em;pointer-events:none;}
+  #c{display:block;touch-action:none;cursor:grab;} #c:active{cursor:grabbing;}
+  .hud{position:fixed;top:12px;left:14px;font-size:12px;opacity:.72;font-family:ui-monospace,Menlo,monospace;letter-spacing:.04em;pointer-events:none;}
   .hud b{color:#D3A03C;}
+  .zoom{position:fixed;right:14px;bottom:16px;display:flex;flex-direction:column;gap:6px;}
+  .zoom button{width:34px;height:34px;background:rgba(12,43,58,.85);border:1px solid rgba(211,160,60,.4);
+    color:#F2D28E;font-size:19px;border-radius:3px;cursor:pointer;}
+  .zoom button:hover{border-color:#D3A03C;background:rgba(211,160,60,.16);}
+  .info{position:fixed;left:14px;bottom:16px;min-width:180px;max-width:60vw;background:rgba(12,43,58,.9);
+    border:1px solid rgba(211,160,60,.4);border-radius:4px;padding:11px 13px;display:none;}
+  .info.show{display:block;}
+  .info .n{font-family:"IM Fell English",Georgia,serif;font-size:20px;margin-bottom:2px;}
+  .info .s{font-family:ui-monospace,Menlo,monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#D3A03C;}
 </style></head><body>
 <canvas id="c"></canvas>
-<div class="hud">GRAND LINE CHART · <b>globe prototype</b> · drag to spin</div>
+<div class="hud">GRAND LINE CHART · <b>globe prototype</b> · drag to spin · scroll/pinch to zoom · tap an island</div>
+<div class="zoom"><button id="zin" aria-label="Zoom in">+</button><button id="zout" aria-label="Zoom out">−</button></div>
+<div class="info" id="info"><div class="n" id="iN"></div><div class="s" id="iS"></div></div>
 <script>
 const ISLANDS = [{"id":"reverse-mountain","n":"Reverse Mountain","x":1000,"y":1200,"sea":"paradise","type":"landmark","major":true},{"id":"twin-cape","n":"Twin Cape","x":1082,"y":1252,"sea":"paradise","type":"island","major":false},{"id":"whisky-peak","n":"Whisky Peak","x":1245,"y":1138,"sea":"paradise","type":"island","major":false},{"id":"little-garden","n":"Little Garden","x":1425,"y":1262,"sea":"paradise","type":"island","major":true},{"id":"drum-island","n":"Drum Island","x":1600,"y":1132,"sea":"paradise","type":"island","major":true},{"id":"alabasta","n":"Alabasta","x":1785,"y":1258,"sea":"paradise","type":"island","major":true},{"id":"jaya","n":"Jaya","x":1975,"y":1150,"sea":"paradise","type":"island","major":true},{"id":"skypiea","n":"Skypiea","x":2015,"y":1108,"sea":"paradise","type":"sky","major":true},{"id":"long-ring","n":"Long Ring Long Land","x":2170,"y":1268,"sea":"paradise","type":"island","major":false},{"id":"water-7","n":"Water 7","x":2360,"y":1128,"sea":"paradise","type":"island","major":true},{"id":"enies-lobby","n":"Enies Lobby","x":2490,"y":1265,"sea":"paradise","type":"island","major":true},{"id":"thriller-bark","n":"Thriller Bark","x":2645,"y":1140,"sea":"paradise","type":"island","major":true},{"id":"sabaody","n":"Sabaody Archipelago","x":2880,"y":1120,"sea":"paradise","type":"island","major":true},{"id":"amazon-lily","n":"Amazon Lily","x":2650,"y":1400,"sea":"paradise","type":"island","major":true},{"id":"impel-down","n":"Impel Down","x":2800,"y":1450,"sea":"paradise","type":"undersea","major":true},{"id":"marineford","n":"Marineford","x":2900,"y":1288,"sea":"paradise","type":"island","major":true},{"id":"mary-geoise","n":"Mary Geoise","x":3000,"y":1120,"sea":"paradise","type":"landmark","major":true},{"id":"fishman-island","n":"Fish-Man Island","x":3000,"y":1285,"sea":"paradise","type":"undersea","major":true},{"id":"punk-hazard","n":"Punk Hazard","x":3180,"y":1250,"sea":"newworld","type":"island","major":true},{"id":"dressrosa","n":"Dressrosa","x":3340,"y":1155,"sea":"newworld","type":"island","major":true},{"id":"green-bit","n":"Green Bit","x":3388,"y":1128,"sea":"newworld","type":"island","major":false},{"id":"zou","n":"Zou","x":3570,"y":1275,"sea":"newworld","type":"island","major":true},{"id":"whole-cake","n":"Whole Cake Island","x":3735,"y":1150,"sea":"newworld","type":"island","major":true},{"id":"wano","n":"Wano Country","x":3900,"y":1272,"sea":"newworld","type":"island","major":true},{"id":"weatheria","n":"Weatheria","x":3330,"y":740,"sea":"newworld","type":"sky","major":false},{"id":"egghead","n":"Egghead","x":190,"y":1170,"sea":"newworld","type":"island","major":true},{"id":"elbaf","n":"Elbaf","x":440,"y":1265,"sea":"newworld","type":"island","major":true},{"id":"rusukaina","n":"Rusukaina","x":2540,"y":1440,"sea":"paradise","type":"island","major":false},{"id":"boin","n":"Boin Archipelago","x":1300,"y":1520,"sea":"paradise","type":"island","major":false},{"id":"kuraigana","n":"Kuraigana Island","x":2620,"y":1560,"sea":"paradise","type":"island","major":true},{"id":"namakura","n":"Namakura Island","x":2120,"y":1500,"sea":"paradise","type":"island","major":false},{"id":"kamabakka","n":"Kamabakka Kingdom","x":2450,"y":1005,"sea":"paradise","type":"island","major":false},{"id":"dawn-island","n":"Dawn Island","x":2150,"y":2010,"sea":"east","type":"island","major":true},{"id":"shells-town","n":"Shells Town","x":2565,"y":1900,"sea":"east","type":"island","major":true},{"id":"orange-town","n":"Orange Town","x":2350,"y":1735,"sea":"east","type":"island","major":false},{"id":"syrup-village","n":"Syrup Village","x":1905,"y":1880,"sea":"east","type":"island","major":false},{"id":"baratie","n":"Baratie","x":1680,"y":1690,"sea":"east","type":"island","major":true},{"id":"conomi","n":"Conomi Islands","x":1400,"y":1790,"sea":"east","type":"island","major":false},{"id":"loguetown","n":"Loguetown","x":1160,"y":1615,"sea":"east","type":"island","major":true},{"id":"shimotsuki","n":"Shimotsuki Village","x":2790,"y":2030,"sea":"east","type":"island","major":false},{"id":"flevance","n":"Flevance","x":1560,"y":620,"sea":"north","type":"island","major":true},{"id":"lvneel","n":"Lvneel Kingdom","x":1870,"y":415,"sea":"north","type":"island","major":false},{"id":"spider-miles","n":"Spider Miles","x":2210,"y":665,"sea":"north","type":"island","major":false},{"id":"germa","n":"Germa Kingdom","x":2560,"y":455,"sea":"north","type":"roaming","major":true},{"id":"karakuri","n":"Karakuri Island","x":1230,"y":520,"sea":"north","type":"island","major":true},{"id":"ohara","n":"Ohara","x":480,"y":600,"sea":"west","type":"island","major":true},{"id":"baterilla","n":"Baterilla","x":560,"y":1900,"sea":"south","type":"island","major":false},{"id":"sorbet","n":"Sorbet Kingdom","x":3620,"y":1860,"sea":"south","type":"island","major":false},{"id":"torino","n":"Torino Kingdom","x":1720,"y":2090,"sea":"south","type":"island","major":false},{"id":"baltigo","n":"Baltigo","x":110,"y":1470,"sea":"newworld","type":"island","major":true},{"id":"hachinosu","n":"Hachinosu","x":330,"y":1480,"sea":"newworld","type":"island","major":true},{"id":"sphinx","n":"Sphinx","x":250,"y":1055,"sea":"newworld","type":"island","major":false}];
-const W=4000,H=2400,GL_Y=1200,DEG=Math.PI/180,PHI_MAX=82*DEG;
-const lonlat=(x,y)=>({lon:(x/W)*2*Math.PI, lat:(1-2*y/H)*PHI_MAX});
-let lam0=90*DEG, phi0=12*DEG;              // face Reverse Mountain, slight tilt
-const cvs=document.getElementById('c'), ctx=cvs.getContext('2d');
-let R,cxp,cyp,DPR=Math.max(1,devicePixelRatio||1);
-function resize(){cvs.style.width=innerWidth+"px";cvs.style.height=innerHeight+"px";cvs.width=innerWidth*DPR;cvs.height=innerHeight*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);
-  R=Math.min(innerWidth,innerHeight)*0.42;cxp=innerWidth/2;cyp=innerHeight/2;draw();}
+const SEA={paradise:'Grand Line — Paradise',newworld:'Grand Line — New World',east:'East Blue',west:'West Blue',north:'North Blue',south:'South Blue'};
+const W=4000,H=2400,DEG=Math.PI/180,PHI_MAX=82*DEG;
+const lonlat=(x,y)=>({lon:(x/W)*2*Math.PI,lat:(1-2*y/H)*PHI_MAX});
+const clampPhi=p=>Math.max(-Math.PI/2+0.02,Math.min(Math.PI/2-0.02,p));
+let lam0=90*DEG,phi0=12*DEG,zoom=1,baseR,R,cxp,cyp,selected=null,spinning=true,idle,anim;
+const DPR=Math.max(1,devicePixelRatio||1);
+const cvs=document.getElementById('c'),ctx=cvs.getContext('2d');
+function resize(){cvs.style.width=innerWidth+'px';cvs.style.height=innerHeight+'px';
+  cvs.width=innerWidth*DPR;cvs.height=innerHeight*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);
+  baseR=Math.min(innerWidth,innerHeight)*0.42;R=baseR*zoom;cxp=innerWidth/2;cyp=innerHeight/2;draw();}
 addEventListener('resize',resize);
+function setZoom(z){zoom=Math.max(0.9,Math.min(7,z));R=baseR*zoom;draw();}
 function project(lon,lat){const dl=lon-lam0;
   const cosc=Math.sin(phi0)*Math.sin(lat)+Math.cos(phi0)*Math.cos(lat)*Math.cos(dl);
-  const x=cxp+R*Math.cos(lat)*Math.sin(dl);
-  const y=cyp-R*(Math.cos(phi0)*Math.sin(lat)-Math.sin(phi0)*Math.cos(lat)*Math.cos(dl));
-  return{x,y,vis:cosc>0};}
-function poly(pts,close){ctx.beginPath();let started=false;
-  for(const [lon,lat] of pts){const p=project(lon,lat);
-    if(!p.vis){started=false;continue;} if(!started){ctx.moveTo(p.x,p.y);started=true;}else ctx.lineTo(p.x,p.y);}
-  if(close)ctx.closePath();}
-function band(fn,steps){const pts=[];for(let i=0;i<=steps;i++)pts.push(fn(2*Math.PI*i/steps));return pts;}
-function meridian(lon){const pts=[];for(let i=0;i<=90;i++)pts.push([lon,-Math.PI/2+Math.PI*i/90]);return pts;}
+  return{x:cxp+R*Math.cos(lat)*Math.sin(dl),
+    y:cyp-R*(Math.cos(phi0)*Math.sin(lat)-Math.sin(phi0)*Math.cos(lat)*Math.cos(dl)),vis:cosc>0};}
+function poly(pts){ctx.beginPath();let s=false;for(const[lon,lat]of pts){const p=project(lon,lat);
+  if(!p.vis){s=false;continue;}if(!s){ctx.moveTo(p.x,p.y);s=true;}else ctx.lineTo(p.x,p.y);}ctx.stroke();}
+const parallel=lat=>{const p=[];for(let i=0;i<=160;i++)p.push([2*Math.PI*i/160,lat]);return p;};
+const meridian=lon=>{const p=[];for(let i=0;i<=100;i++)p.push([lon,-Math.PI/2+Math.PI*i/100]);return p;};
 function draw(){
   ctx.clearRect(0,0,innerWidth,innerHeight);
   const g=ctx.createRadialGradient(cxp-R*0.4,cyp-R*0.45,R*0.15,cxp,cyp,R*1.08);
   g.addColorStop(0,'#1E5E75');g.addColorStop(.55,'#0D3143');g.addColorStop(1,'#05161F');
   ctx.beginPath();ctx.arc(cxp,cyp,R,0,7);ctx.fillStyle=g;ctx.fill();
-  ctx.save();ctx.beginPath();ctx.arc(cxp,cyp,R,0,7);ctx.clip();
-  ctx.lineCap='round';ctx.lineJoin='round';
-  // graticule
-  ctx.strokeStyle='rgba(95,166,188,0.12)';ctx.lineWidth=1;
-  for(let la=-60;la<=60;la+=30){poly(band(t=>[t,la*DEG],120));ctx.stroke();}
-  for(let lo=0;lo<360;lo+=30){poly(meridian(lo*DEG));ctx.stroke();}
-  // Grand Line band (equator)
-  ctx.strokeStyle='rgba(111,176,196,0.30)';ctx.lineWidth=R*0.085;poly(band(t=>[t,0],180));ctx.stroke();
-  ctx.strokeStyle='rgba(239,230,210,0.28)';ctx.lineWidth=1.4;poly(band(t=>[t,0],180));ctx.stroke();
+  ctx.save();ctx.beginPath();ctx.arc(cxp,cyp,R,0,7);ctx.clip();ctx.lineJoin='round';
+  ctx.lineCap='round';ctx.strokeStyle='rgba(95,166,188,0.12)';ctx.lineWidth=1;
+  for(let la=-60;la<=60;la+=30)poly(parallel(la*DEG));
+  for(let lo=0;lo<360;lo+=30)poly(meridian(lo*DEG));
+  // Calm Belts: dead-water bands hugging the Grand Line
+  ctx.lineCap='butt';ctx.strokeStyle='rgba(7,30,42,0.72)';ctx.lineWidth=R*0.072;
+  poly(parallel(6.4*DEG));poly(parallel(-6.4*DEG));
+  ctx.strokeStyle='rgba(44,110,130,0.18)';ctx.lineWidth=1;poly(parallel(10*DEG));poly(parallel(-10*DEG));poly(parallel(2.8*DEG));poly(parallel(-2.8*DEG));
+  // Grand Line
+  ctx.lineCap='butt';ctx.strokeStyle='rgba(111,176,196,0.32)';ctx.lineWidth=R*0.055;poly(parallel(0));
+  ctx.strokeStyle='rgba(239,230,210,0.28)';ctx.lineWidth=1.3;poly(parallel(0));
   // Red Line (meridian great circle through lon 90 & 270)
-  ctx.strokeStyle='rgba(176,58,46,0.94)';ctx.lineWidth=R*0.11;
-  poly(meridian(90*DEG));ctx.stroke(); poly(meridian(270*DEG));ctx.stroke();
-  ctx.strokeStyle='rgba(90,22,15,0.9)';ctx.lineWidth=1.4;
-  poly(meridian(90*DEG));ctx.stroke(); poly(meridian(270*DEG));ctx.stroke();
+  ctx.lineCap='round';ctx.strokeStyle='rgba(176,58,46,0.94)';ctx.lineWidth=R*0.1;poly(meridian(90*DEG));poly(meridian(270*DEG));
+  ctx.strokeStyle='rgba(90,22,15,0.85)';ctx.lineWidth=1.3;poly(meridian(90*DEG));poly(meridian(270*DEG));
   // islands
   ctx.textBaseline='middle';ctx.font='11px system-ui,sans-serif';
   for(const is of ISLANDS){const {lon,lat}=lonlat(is.x,is.y);const p=project(lon,lat);if(!p.vis)continue;
-    const r=is.major?4.6:3;ctx.beginPath();ctx.arc(p.x,p.y,r,0,7);
+    const sel=is===selected,near=Math.hypot(p.x-cxp,p.y-cyp)<R*0.62;
+    const r=(is.major?4.6:3);
+    if(sel){ctx.beginPath();ctx.arc(p.x,p.y,r+5,0,7);ctx.strokeStyle='#F2D28E';ctx.lineWidth=2;ctx.stroke();}
+    ctx.beginPath();ctx.arc(p.x,p.y,r,0,7);
     ctx.fillStyle=is.type==='sky'?'#DCEEF4':is.type==='landmark'?'#C4463A':'#E9DCC0';ctx.fill();
     ctx.lineWidth=1;ctx.strokeStyle='rgba(11,26,34,0.85)';ctx.stroke();
-    if(is.major && Math.hypot(p.x-cxp,p.y-cyp)<R*0.82){ctx.fillStyle='rgba(239,230,210,0.92)';
-      ctx.fillText(is.n,p.x+r+3,p.y);}}
+    if(sel||is.major||(zoom>2.2&&near)){ctx.fillStyle=sel?'#F2D28E':'rgba(239,230,210,0.9)';ctx.fillText(is.n,p.x+r+3,p.y);}}
   ctx.restore();
   ctx.beginPath();ctx.arc(cxp,cyp,R,0,7);ctx.strokeStyle='rgba(211,160,60,0.35)';ctx.lineWidth=1.5;ctx.stroke();
 }
-let dragging=false,px,py,vl=0,vp=0,idle;
-cvs.addEventListener('pointerdown',e=>{dragging=true;px=e.clientX;py=e.clientY;vl=vp=0;cancelAnimationFrame(idle);cvs.setPointerCapture(e.pointerId);});
-cvs.addEventListener('pointermove',e=>{if(!dragging)return;const dx=e.clientX-px,dy=e.clientY-py;px=e.clientX;py=e.clientY;const k=0.005;
-  lam0-=dx*k;phi0=Math.max(-Math.PI/2+0.02,Math.min(Math.PI/2-0.02,phi0+dy*k));vl=-dx*k;vp=dy*k;draw();});
-cvs.addEventListener('pointerup',()=>{dragging=false;coast();});
-function coast(){if(dragging)return;if(Math.abs(vl)<0.0003&&Math.abs(vp)<0.0003){spin();return;}
-  lam0+=vl;phi0=Math.max(-Math.PI/2+0.02,Math.min(Math.PI/2-0.02,phi0+vp));vl*=0.95;vp*=0.95;draw();requestAnimationFrame(coast);}
-function spin(){cancelAnimationFrame(idle);const step=()=>{if(dragging)return;lam0-=0.0008;draw();idle=requestAnimationFrame(step);};idle=requestAnimationFrame(step);}
+// interaction
+const ptrs=new Map();let dragging=false,lastX,lastY,moved=0,vl=0,vp=0,pinchD=0;
+const pdist=()=>{const a=[...ptrs.values()];return Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y);};
+cvs.addEventListener('pointerdown',e=>{ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});cvs.setPointerCapture(e.pointerId);stopSpin();cancelAnimationFrame(anim);
+  if(ptrs.size===1){dragging=true;lastX=e.clientX;lastY=e.clientY;moved=0;vl=vp=0;} if(ptrs.size===2){dragging=false;pinchD=pdist();}});
+cvs.addEventListener('pointermove',e=>{if(!ptrs.has(e.pointerId))return;ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(ptrs.size===2){const d=pdist();if(pinchD>0)setZoom(zoom*d/pinchD);pinchD=d;return;}
+  if(dragging){const dx=e.clientX-lastX,dy=e.clientY-lastY;lastX=e.clientX;lastY=e.clientY;moved+=Math.abs(dx)+Math.abs(dy);
+    const k=0.005/Math.sqrt(zoom);lam0-=dx*k;phi0=clampPhi(phi0+dy*k);vl=-dx*k;vp=dy*k;draw();}});
+function endPtr(e){const single=ptrs.size===1,click=single&&moved<6;ptrs.delete(e.pointerId);if(ptrs.size<2)pinchD=0;
+  if(ptrs.size===0){dragging=false;if(click){selectIsland(hit(e.clientX,e.clientY));}else coast();}}
+cvs.addEventListener('pointerup',endPtr);cvs.addEventListener('pointercancel',e=>{ptrs.delete(e.pointerId);dragging=false;});
+cvs.addEventListener('wheel',e=>{e.preventDefault();stopSpin();setZoom(zoom*(e.deltaY<0?1.12:0.9));},{passive:false});
+document.getElementById('zin').onclick=()=>{stopSpin();setZoom(zoom*1.35);};
+document.getElementById('zout').onclick=()=>{stopSpin();setZoom(zoom/1.35);};
+function hit(mx,my){let best=null,bd=16;for(const is of ISLANDS){const {lon,lat}=lonlat(is.x,is.y);const p=project(lon,lat);
+  if(!p.vis)continue;const d=Math.hypot(p.x-mx,p.y-my);if(d<bd){bd=d;best=is;}}return best;}
+function selectIsland(is){selected=is;const box=document.getElementById('info');
+  if(is){document.getElementById('iN').textContent=is.n;document.getElementById('iS').textContent=SEA[is.sea]||is.sea;box.classList.add('show');
+    const {lon,lat}=lonlat(is.x,is.y);animateTo(lon,lat);}else box.classList.remove('show');draw();}
+function animateTo(lon,lat){cancelAnimationFrame(anim);const l0=lam0,p0=phi0;let dl=lon-l0;while(dl>Math.PI)dl-=2*Math.PI;while(dl<-Math.PI)dl+=2*Math.PI;
+  const dp=clampPhi(lat)-p0,t0=performance.now();
+  const step=t=>{let k=Math.min(1,(t-t0)/460);k=1-Math.pow(1-k,3);lam0=l0+dl*k;phi0=p0+dp*k;draw();if(k<1)anim=requestAnimationFrame(step);};anim=requestAnimationFrame(step);}
+function coast(){if(dragging)return;if(Math.abs(vl)<0.0003&&Math.abs(vp)<0.0003)return;lam0+=vl;phi0=clampPhi(phi0+vp);vl*=0.95;vp*=0.95;draw();requestAnimationFrame(coast);}
+function spin(){if(!spinning)return;lam0-=0.0008;draw();idle=requestAnimationFrame(spin);}
+function stopSpin(){spinning=false;cancelAnimationFrame(idle);}
 resize();spin();
 </script></body></html>
