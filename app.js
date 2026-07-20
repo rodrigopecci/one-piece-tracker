@@ -634,28 +634,6 @@ TILES.forEach(dx => [RL_A,RL_B].forEach(rl => {
     t.textContent='Red Line'; lines.appendChild(t);
   });
 }));
-/* Reverse Mountain: the one way in. Rather than arrows on top, we CARVE the
-   canals through the Red Line — sea-teal channels with a dark coastline cut into
-   the red rock: an X of four canals climbing from the four Blues, a convergence
-   pool at the summit, and one channel flowing east into Paradise. Tiled with the
-   rest so it survives the wrap. */
-function reverseMountainFlow(cx){
-  const cy = GL_Y, g = el('g', {'pointer-events':'none'});
-  const outline = '#09222E', water = '#336F82', hi = '#78B7CB';
-  // short arms: they cut through the red wall and open just at the sea edges —
-  // four to the Blues, one east into Paradise — not a giant X floating on the sea.
-  const arms = [[cx-98,cy-90],[cx+98,cy-90],[cx-98,cy+90],[cx+98,cy+90],[cx+150,cy]];
-  const seg = (x2,y2,w,col,op) => el('path',{d:`M${cx} ${cy} L${x2} ${y2}`,fill:'none',stroke:col,
-    'stroke-width':w,opacity:op==null?1:op,'stroke-linecap':'round'});
-  arms.forEach(([x,y]) => g.appendChild(seg(x,y,26,outline)));   // canal coastline (dark)
-  arms.forEach(([x,y]) => g.appendChild(seg(x,y,18,water)));     // the water itself
-  arms.forEach(([x,y]) => g.appendChild(seg(x,y,2.6,hi,.45)));   // faint current down the middle
-  g.appendChild(el('circle',{cx,cy,r:22,fill:water,stroke:outline,'stroke-width':4}));   // convergence pool
-  g.appendChild(el('circle',{cx,cy,r:22,fill:'none',stroke:hi,'stroke-width':1.2,opacity:.4}));
-  return g;
-}
-TILES.forEach(dx => lines.appendChild(reverseMountainFlow(RL_A + dx)));
-
 /* Paradise sits between the two Red Line crossings; the New World is the
    wrap-around half, so its label rides the seam (x = 0 ≡ W). */
 TILES.forEach(dx => [[2000,'Paradise'],[W,'New World']].forEach(([x,txt]) => {
