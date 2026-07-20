@@ -52,7 +52,7 @@ const CANON_ISLANDS = [
   {id:'jaya', n:'Jaya', x:1975, y:1150, sea:'paradise', type:'island', major:true,
    b:'Half an island. The other half was carried into the sky four hundred years ago.',
    lore:'What remains is a rough port of pirates, brawlers and bounty hunters. Old sailors here still trade the tall tale of a city of gold that once stood on the missing half.'},
-  {id:'skypiea', n:'Skypiea', x:2030, y:1100, sea:'paradise', type:'sky', major:true,
+  {id:'skypiea', n:'Skypiea', x:2015, y:1108, sea:'paradise', type:'sky', major:true,
    b:'A country in the clouds above Jaya, ruled by a self-declared god, built on a missing city of gold.',
    lore:'Reached only by a freak column of rising sea, a serene white land on the clouds. Its one harsh law: everything on the sacred ground belongs to God, and trespassers are judged without appeal.'},
   {id:'long-ring', n:'Long Ring Long Land', x:2170, y:1268, sea:'paradise', type:'island',
@@ -839,13 +839,14 @@ function draw(){
     shadow.setAttribute('r', br*1.55);
     shadow.setAttribute('cy', isle.y + br*0.42);
     shadow.style.opacity = isle.type==='filler' ? .5 : 1;
-    /* Sky islands (Skypiea, Weatheria) sit in the Grand Line on a 2D map, so an
-       up-arrow above the marker is the cue that they're really up in the sky. */
+    /* Sky islands (Skypiea, Weatheria) sit in the Grand Line on a 2D map, so a
+       small up-arrow off the marker's right side is the subtle cue that they're
+       really up in the sky. */
     if (isle.type==='sky'){
-      const cx = nd.wx, top = isle.y - rr - 4*k, len = 6.5*k, aw = 3.6*k;
-      skyup.setAttribute('d', `M${cx} ${top+len} L${cx} ${top} M${cx-aw} ${top+aw} L${cx} ${top} L${cx+aw} ${top+aw}`);
-      skyup.setAttribute('stroke-width', 1.9*k);
-      skyup.style.opacity = scale > .3 ? .95 : 0;
+      const ax = nd.wx + rr + 2.8*k, ay = isle.y, h = 3.2*k, aw = 1.8*k;
+      skyup.setAttribute('d', `M${ax} ${ay+h} L${ax} ${ay-h} M${ax-aw} ${ay-h+aw} L${ax} ${ay-h} L${ax+aw} ${ay-h+aw}`);
+      skyup.setAttribute('stroke-width', 1.3*k);
+      skyup.style.opacity = scale > .35 ? .9 : 0;
     } else skyup.style.opacity = 0;
     if (isle.type==='landmark'){
       const set = n => { n.setAttribute('x', nd.wx-br); n.setAttribute('y', isle.y-br);
