@@ -1193,7 +1193,7 @@ function renderQuickLog(){
   document.getElementById('qlogT').textContent = (info && unitRevealed(med, u)) ? info.t : '';
   C.textContent = shielded || !arc ? 'Uncharted waters ahead' : arc.n;   // arc only — no duplicate island name
   mark.disabled = false;
-  mark.textContent = `✓ Mark watched`;
+  mark.textContent = med === 'anime' ? '✓ Mark watched' : '✓ Mark as read';
 }
 document.getElementById('qlogMark').onclick = () => {
   const med = medium();
