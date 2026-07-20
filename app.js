@@ -634,29 +634,24 @@ TILES.forEach(dx => [RL_A,RL_B].forEach(rl => {
     t.textContent='Red Line'; lines.appendChild(t);
   });
 }));
-/* Reverse Mountain: the one way in. Four canals climb it from the four Blues and
-   pour down into the Grand Line, so we draw four inflow channels converging on
-   the mountain (arrows pointing in) and one bolder channel flowing east into
-   Paradise (arrow pointing out). Tiled with the rest so it survives the wrap. */
+/* Reverse Mountain: the one way in. Rather than arrows on top, we CARVE the
+   canals through the Red Line — sea-teal channels with a dark coastline cut into
+   the red rock: an X of four canals climbing from the four Blues, a convergence
+   pool at the summit, and one channel flowing east into Paradise. Tiled with the
+   rest so it survives the wrap. */
 function reverseMountainFlow(cx){
   const cy = GL_Y, g = el('g', {'pointer-events':'none'});
-  const water = '#A9DDEC';
-  const arrow = (x, y, a, size, col, w, op) => {
-    const d = .55, bx = x + size*Math.cos(a+Math.PI-d), by = y + size*Math.sin(a+Math.PI-d),
-          cx2 = x + size*Math.cos(a+Math.PI+d), cy2 = y + size*Math.sin(a+Math.PI+d);
-    g.appendChild(el('path',{d:`M${bx.toFixed(1)} ${by.toFixed(1)} L${x.toFixed(1)} ${y.toFixed(1)} L${cx2.toFixed(1)} ${cy2.toFixed(1)}`,
-      fill:'none',stroke:col,'stroke-width':w,opacity:op,'stroke-linecap':'round','stroke-linejoin':'round'}));
-  };
-  [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(([sx,sy]) => {          // four Blues → in
-    const ox = cx+sx*150, oy = cy+sy*128, ix = cx+sx*50, iy = cy+sy*44;
-    g.appendChild(el('path',{d:`M${ox} ${oy} C${cx+sx*108} ${cy+sy*104} ${cx+sx*74} ${cy+sy*56} ${ix} ${iy}`,
-      fill:'none',stroke:water,'stroke-width':2.6,opacity:.5,'stroke-linecap':'round'}));
-    arrow(ix, iy, Math.atan2(cy-iy, cx-ix), 9, water, 2.4, .7);
-  });
-  g.appendChild(el('circle',{cx,cy,r:7,fill:'none',stroke:water,'stroke-width':2,opacity:.5}));
-  g.appendChild(el('circle',{cx,cy,r:2.4,fill:water,opacity:.6}));
-  g.appendChild(el('path',{d:`M${cx+42} ${cy} L${cx+188} ${cy}`,fill:'none',stroke:'#CFEAF4','stroke-width':3.6,opacity:.8,'stroke-linecap':'round'}));
-  arrow(cx+188, cy, 0, 12, '#CFEAF4', 3.2, .9);                 // → Paradise
+  const outline = '#09222E', water = '#336F82', hi = '#78B7CB';
+  // short arms: they cut through the red wall and open just at the sea edges —
+  // four to the Blues, one east into Paradise — not a giant X floating on the sea.
+  const arms = [[cx-98,cy-90],[cx+98,cy-90],[cx-98,cy+90],[cx+98,cy+90],[cx+150,cy]];
+  const seg = (x2,y2,w,col,op) => el('path',{d:`M${cx} ${cy} L${x2} ${y2}`,fill:'none',stroke:col,
+    'stroke-width':w,opacity:op==null?1:op,'stroke-linecap':'round'});
+  arms.forEach(([x,y]) => g.appendChild(seg(x,y,26,outline)));   // canal coastline (dark)
+  arms.forEach(([x,y]) => g.appendChild(seg(x,y,18,water)));     // the water itself
+  arms.forEach(([x,y]) => g.appendChild(seg(x,y,2.6,hi,.45)));   // faint current down the middle
+  g.appendChild(el('circle',{cx,cy,r:22,fill:water,stroke:outline,'stroke-width':4}));   // convergence pool
+  g.appendChild(el('circle',{cx,cy,r:22,fill:'none',stroke:hi,'stroke-width':1.2,opacity:.4}));
   return g;
 }
 TILES.forEach(dx => lines.appendChild(reverseMountainFlow(RL_A + dx)));
