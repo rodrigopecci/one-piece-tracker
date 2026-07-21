@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>Grand Line Chart — cartography lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{--paper:#efe4c9;--ink:#071820;--brass:#d4a444;--red:#b94b3e;--panel:rgba(7,25,34,.91);}
+  *{box-sizing:border-box} html,body{height:100%;margin:0} body{overflow:hidden;background:#04151d;color:var(--paper);font-family:"IBM Plex Sans",sans-serif}
+  canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab} canvas:active{cursor:grabbing}
+  .wash{position:fixed;inset:0;pointer-events:none;background:radial-gradient(circle at 50% 42%,transparent 38%,rgba(0,7,11,.65) 100%);z-index:2}
+  .top{position:fixed;z-index:5;top:14px;left:14px;display:flex;align-items:center;gap:12px;max-width:calc(100vw - 28px)}
+  .brand{border:1px solid rgba(212,164,68,.5);background:var(--panel);padding:10px 14px;box-shadow:0 8px 24px rgba(0,0,0,.28)}
+  .brand b{display:block;font-family:"IM Fell English",serif;font-size:19px;font-weight:400;letter-spacing:.08em}
+  .brand span{display:block;font-family:"IBM Plex Mono",monospace;font-size:8px;letter-spacing:.2em;text-transform:uppercase;color:var(--brass);margin-top:2px}
+  .back{color:var(--paper);text-decoration:none;border:1px solid rgba(212,164,68,.35);background:var(--panel);padding:8px 10px;font:9px "IBM Plex Mono",monospace;letter-spacing:.12em;text-transform:uppercase}
+  .back:hover{border-color:var(--brass)}
+  .panel{position:fixed;right:14px;top:14px;z-index:5;width:min(265px,calc(100vw - 28px));max-height:calc(100dvh - 28px);overflow:auto;background:var(--panel);border:1px solid rgba(212,164,68,.42);padding:16px;box-shadow:0 14px 40px rgba(0,0,0,.34)}
+  .panel h1{font:400 23px "IM Fell English",serif;margin:0 0 5px}.panel>p{font-size:11px;line-height:1.5;color:rgba(239,228,201,.58);margin:0 0 15px}
+  .section{font:8px "IBM Plex Mono",monospace;letter-spacing:.2em;text-transform:uppercase;color:var(--brass);margin:14px 0 7px}
+  .targets{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  .targets button,.reset{border:1px solid rgba(212,164,68,.25);background:rgba(239,228,201,.035);color:rgba(239,228,201,.78);padding:8px;text-align:left;font:9px "IBM Plex Mono",monospace;cursor:pointer}
+  .targets button:hover,.targets button.active,.reset:hover{border-color:var(--brass);background:rgba(212,164,68,.14);color:var(--paper)}
+  .reset{width:100%;text-align:center;margin-top:8px;text-transform:uppercase;letter-spacing:.1em}
+  .legend{display:grid;gap:8px;font-size:10px;color:rgba(239,228,201,.67)}.legend span{display:flex;align-items:center;gap:8px}.legend i{width:10px;height:10px;border-radius:50%;display:block;flex:none}
+  .note{position:fixed;left:14px;bottom:14px;z-index:5;width:min(330px,calc(100vw - 28px));background:var(--panel);border:1px solid rgba(212,164,68,.34);padding:12px 14px}
+  .note b{font:400 16px "IM Fell English",serif}.note span{display:block;font-size:10px;line-height:1.5;color:rgba(239,228,201,.55);margin-top:3px}
+  .label{position:fixed;z-index:4;pointer-events:none;opacity:0;white-space:nowrap;transform:translate(-50%,-50%);font:11px "IM Fell English",serif;color:#fff4db;text-shadow:-1px -1px 0 #071820,1px -1px 0 #071820,-1px 1px 0 #071820,1px 1px 0 #071820,0 2px 5px #071820;transition:opacity .15s}
+  .label.show{opacity:1}.label.major{font-size:13px}.label.region{font:9px "IBM Plex Mono",monospace;letter-spacing:.23em;color:rgba(213,235,234,.72)}
+  @media(max-width:760px){.panel{top:auto;bottom:12px;right:12px;max-height:38dvh;width:230px}.note{display:none}.top{top:10px;left:10px}.brand{padding:8px 10px}.brand b{font-size:15px}.back{display:none}.targets{grid-template-columns:1fr 1fr}.panel h1{font-size:19px}.panel>p,.legend{display:none}}
+  @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<canvas id="mapLab" aria-label="Experimental detailed Three.js globe"></canvas>
+<div class="wash"></div>
+<div id="labels"></div>
+<div class="top">
+  <div class="brand"><b>Grand Line Cartography Lab</b><span>Original procedural terrain · visual prototype</span></div>
+  <a class="back" href="./index.html">← Production tracker</a>
+</div>
+<aside class="panel">
+  <h1>Terrain studies</h1>
+  <p>This page is isolated from the tracker. Rotate, zoom, and inspect how a denser illustrated-map language translates into original 3D geometry.</p>
+  <div class="section">Focus landmark</div>
+  <div class="targets" id="targets"></div>
+  <button class="reset" id="resetView">Fit whole globe</button>
+  <div class="section">Visual language</div>
+  <div class="legend">
+    <span><i style="background:#b94b3e"></i>Layered Red Line terrain</span>
+    <span><i style="background:#70b8c7"></i>Carved water channels</span>
+    <span><i style="background:#93a85b"></i>Biome-specific islands</span>
+    <span><i style="background:#e9eee7"></i>Elevated sky terrain</span>
+  </div>
+</aside>
+<div class="note"><b id="noteTitle">Review target: Reverse Mountain</b><span id="noteText">Five channels are recessed into the mountain mesh, converging on a summit basin. The island studies reuse a small set of terrain, vegetation, settlement, snow, cloud, and landmark primitives.</span></div>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
+<script type="module" src="map-art-lab.js?v=10"></script>
+</body>
+</html>

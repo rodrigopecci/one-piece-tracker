@@ -30,11 +30,15 @@ index.html                       markup + styles
 app.js                           all client-side logic (module script),
                                  including the ARCS array — the single source
                                  of truth for episodes/chapters
+three-world.js                   production Three.js globe renderer
+sync-progress.js                 pure cross-device reconciliation helpers
+map-art-lab.html +
+  map-art-lab.js                 isolated richer-cartography prototype; not
+                                 loaded by the production tracker
 config.js                        Supabase URL + anon key (public-safe); optional
 flat.html + app-flat.js          frozen backup of the old 2D SVG map; deployed
                                  at /flat.html for a one-step revert if needed
-globe.html                       standalone globe prototype the live map grew
-                                 from (reference only, not load-bearing)
+legacy/pre-three-globe/          byte-for-byte backup of the previous renderer
 data/
   chapters/<block>.json          scraped chapter titles + short summaries,
   episodes/<block>.json          100 units per block (block = n/100). Lazy-
@@ -59,8 +63,8 @@ to" stay a single file.
 ## The world model
 
 The One Piece world is a sphere with two great circles crossing it, and the app
-renders it as a **real orthographic globe** (canvas 2D — the `THE GLOBE` block in
-`app.js`). You drag to rotate; there is no flat map anymore.
+renders it as a **real orthographic Three.js globe** (`three-world.js`). You drag
+to rotate; there is no flat map anymore.
 
 Island coordinates live in a 4000×2400 space (`x`,`y` on `CANON_ISLANDS`) mapped
 to the sphere by `lonlat(x,y)`: **x → longitude, y → latitude, the Grand Line =
@@ -258,6 +262,10 @@ Offline-first: `localStorage` is the working copy, Supabase is the backup —
 writes to it are debounced and best-effort (`pushRemote()`), never blocking.
 Anonymous users get the full app with no login.
 
+The header and Settings expose the current cloud state, the last successful
+synchronization on this device, and a manual **Sync now** action. The status is
+informational only: a failed or offline cloud save never blocks the local copy.
+
 Auth: **email + password** via Supabase Auth (`signUp` /
 `signInWithPassword` / `signOut`). Our own form (`#authForm` in the sign-in
 modal, wired in `app.js`); Supabase owns the actual credentials — hashing,
@@ -341,9 +349,10 @@ files or bulk-copy other scraped databases into the repo.
 - [x] `git init` + push to GitHub, GitHub Pages enabled (serves main/root)
 - [ ] Fill `config.js` with real Supabase URL + anon key to turn on auth/sync
 - [ ] Set `SUPABASE_URL`/`SUPABASE_ANON_KEY` as repo variables for the keep-alive cron
-- [ ] Richer map (more) — deferred, needs a design pass. Must stay a
-      **hydrographic chart**, not an illustrated map. Candidates: a wake trail
-      on the sailed route, compass rose + graticule labels, current-flow lines.
+- [ ] Promote the richer map study after review. `map-art-lab.html` currently
+      prototypes original layered Red Line terrain, recessed Reverse Mountain
+      channels, painterly water, dense minor islets, and representative biome
+      islands without changing the production renderer.
 - [ ] Titles — deliberately out for now (owner's call)
 - [ ] Curated island images (frame was removed; add back with real assets)
 - [ ] Bounty
@@ -378,10 +387,10 @@ illustrated look) was on the table. It is now a **canvas orthographic globe**
   (a skipped island leaves a visible grey hole); anime detours branch off in
   yellow dotted lines. Names are spoiler-gated to `???` via `isShielded`.
 
-All plain canvas 2D, redrawn each frame (drag/zoom/hover), kept light. The globe
-reads the same progress state the flat map did — swapping the renderer, not the
-model. Illustrated per-island landmasses were considered and **rejected** —
-they'd mean fabricating coastlines Oda never drew.
+The production globe is Three.js/WebGL and reads the same progress state the
+flat map did — swapping the renderer, not the model. The cartography lab explores
+original procedural landforms and landmark miniatures while keeping coastlines
+editorial and abstract rather than copying another fan map's artwork.
 
 When the data and my assumptions disagree, **the data wins**. It has already
 caught me twice.

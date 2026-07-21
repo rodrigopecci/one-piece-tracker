@@ -81,6 +81,25 @@
     font-family:var(--body);font-size:13px;padding:10px 13px;cursor:pointer;}
   .menu button:hover{background:rgba(211,160,60,.14);}
   .menu button.danger{color:#F0A99C;border-top:1px solid rgba(211,160,60,.18);}
+  .sync-pill{display:flex;align-items:center;gap:7px;background:rgba(233,220,192,.035);
+    border:1px solid rgba(211,160,60,.28);border-radius:999px;color:rgba(239,230,210,.72);
+    padding:6px 10px;cursor:pointer;font-family:var(--mono);font-size:9px;letter-spacing:.08em;
+    text-transform:uppercase;white-space:nowrap;transition:border-color .16s,background .16s,color .16s;}
+  .sync-pill:hover{border-color:var(--brass);background:rgba(211,160,60,.1);color:var(--paper);}
+  .sync-pill .sdot{width:7px;height:7px;border-radius:50%;background:#78909a;box-shadow:0 0 0 3px rgba(120,144,154,.12);}
+  .sync-pill[data-state="syncing"] .sdot{background:var(--brass);animation:syncPulse 1s ease-in-out infinite;}
+  .sync-pill[data-state="saved"] .sdot{background:#79b67d;box-shadow:0 0 0 3px rgba(121,182,125,.13);}
+  .sync-pill[data-state="offline"] .sdot,.sync-pill[data-state="error"] .sdot{background:var(--voyage);box-shadow:0 0 0 3px rgba(224,80,63,.13);}
+  @keyframes syncPulse{50%{opacity:.35;transform:scale(.72);}}
+  .sync-card{border:1px solid rgba(211,160,60,.28);border-radius:3px;background:rgba(211,160,60,.055);
+    padding:13px;margin:2px 0 16px;display:grid;grid-template-columns:1fr auto;gap:10px 14px;align-items:center;}
+  .sync-card .copy{min-width:0;}
+  .sync-card b{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--brass-lite);}
+  .sync-card span{display:block;font-size:12px;line-height:1.5;color:rgba(239,230,210,.58);margin-top:4px;}
+  .sync-now{background:none;border:1px solid rgba(211,160,60,.5);color:var(--brass-lite);border-radius:2px;
+    padding:8px 10px;cursor:pointer;font-family:var(--mono);font-size:9px;letter-spacing:.11em;text-transform:uppercase;white-space:nowrap;}
+  .sync-now:hover:not(:disabled){background:rgba(211,160,60,.14);border-color:var(--brass);}
+  .sync-now:disabled{opacity:.42;cursor:default;}
 
   .modal{position:fixed;inset:0;z-index:70;display:none;align-items:center;justify-content:center;padding:20px;}
   .modal.open{display:flex;}
@@ -170,6 +189,12 @@
   .anch .locked{font-size:12.5px;color:rgba(239,230,210,.6);line-height:1.55;margin:0 0 10px;}
   .toast.crew{border-color:var(--brass);background:#20344A;}
   @media (max-width:760px){ .crewgrid{grid-template-columns:1fr;} }
+  @media (max-width:620px){
+    .sync-pill{padding:6px 8px;}
+    .sync-pill .sync-label{display:none;}
+    .sync-card{grid-template-columns:1fr;}
+    .sync-now{width:100%;}
+  }
 
   .stage{position:relative;overflow:hidden;}
   canvas#globe{width:100%;height:100%;display:block;cursor:grab;touch-action:none;background:var(--sea-deep);}
@@ -452,6 +477,9 @@
         placeholder="Search titles, arcs, summaries…" aria-label="Search episodes, chapters and arcs" />
       <div class="search-results" id="searchResults" role="listbox"></div>
     </div>
+    <button class="sync-pill" id="syncStatusBtn" data-state="local" aria-label="Cloud save status: local only">
+      <span class="sdot" aria-hidden="true"></span><span class="sync-label" id="syncStatusText">Local only</span>
+    </button>
     <div class="acct">
       <button class="avatar" id="acctBtn" aria-haspopup="menu" aria-expanded="false">
         <span class="disc" id="acctDisc">?</span><span class="who" id="acctWho">Sign in</span>
@@ -625,6 +653,11 @@
     <button class="x" data-close aria-label="Close">✕</button>
     <h3 id="stTitle">Settings</h3>
     <p class="sub">How your voyage behaves, and who gets to see it.</p>
+    <div class="sync-card" id="syncCard">
+      <span class="copy"><b id="syncCardTitle">Saved on this device</b>
+        <span id="syncCardDetail">Sign in to keep your voyage synchronized across devices.</span></span>
+      <button class="sync-now" id="syncNow">Sign in to sync</button>
+    </div>
     <div class="setting">
       <span class="txt"><b>Public profile</b>
         <span>Other sailors can see your name and how far you've come. Needed to meet people at your point in the story.</span></span>
@@ -664,6 +697,6 @@
     }
   }
 </script>
-<script type="module" src="app.js?v=32"></script>
+<script type="module" src="app.js?v=33"></script>
 </body>
 </html>

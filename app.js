@@ -1410,6 +1410,7 @@ function goToArc(arc){
 
 const acctBtn = document.getElementById('acctBtn'), acctMenu = document.getElementById('acctMenu');
 const acctDisc = document.getElementById('acctDisc'), acctWho = document.getElementById('acctWho');
+const syncStatusBtn = document.getElementById('syncStatusBtn');
 function renderAcct(){
   const u = state.user;
   acctDisc.textContent = u ? u.name[0].toUpperCase() : '?';
@@ -1435,6 +1436,7 @@ function renderAcct(){
     s.onclick = () => { closeAcct(); openModal('settingsModal'); };
     acctMenu.append(i,s);
   }
+  renderCloudStatus();
 }
 const closeAcct = () => { acctMenu.classList.remove('open'); acctBtn.setAttribute('aria-expanded','false'); };
 acctBtn.onclick = e => {
@@ -1445,6 +1447,7 @@ acctBtn.onclick = e => {
 };
 document.addEventListener('click', () => closeAcct());
 acctMenu.addEventListener('click', e => e.stopPropagation());
+syncStatusBtn.onclick = () => { closeAcct(); openModal('settingsModal'); };
 
 const openModal = id => document.getElementById(id).classList.add('open');
 const closeModal = id => document.getElementById(id).classList.remove('open');
@@ -1521,6 +1524,7 @@ authForm.addEventListener('submit', async e => {
 const sPublic=document.getElementById('sPublic'), sCrew=document.getElementById('sCrew');
 const sSpoiler=document.getElementById('sSpoiler'), sShowFiller=document.getElementById('sShowFiller');
 const sFiller=document.getElementById('sFiller');
+const syncNow=document.getElementById('syncNow');
 function renderSettings(){
   sPublic.setAttribute('aria-checked', String(state.settings.public));
   sCrew.setAttribute('aria-checked', String(state.settings.crew && state.settings.public));
@@ -1557,6 +1561,16 @@ sFiller.onclick = () => {
   state.settings.countFiller = !state.settings.countFiller;
   persist(); renderSettings(); renderTally(); draw();
 };
+syncNow.onclick = async () => {
+  if (!state.user?.id){
+    closeModal('settingsModal');
+    authMode='signin'; renderAuthMode(); openModal('signinModal');
+    return;
+  }
+  if (!navigator.onLine){ toast('You’re offline — progress is safe on this device'); return; }
+  const saved = await pushRemote();
+  if (saved) toast('Cloud save complete');
+};
 document.getElementById('resetVoyage').onclick = () => {
   clearSeen('anime'); clearSeen('manga'); peeked.clear();
   state.history = {anime:{}, manga:{}};
@@ -1584,8 +1598,78 @@ function toast(msg, kind){
    below degrades to exactly the local-only behaviour this app always had.
    ============================================================ */
 const KEY='voyage';
+const CLOUD_STATUS_KEY='voyage-cloud-status';
 let warned=false, saveTimer, remoteTimer;
 let lastSyncedSeen = {anime:new Set(), manga:new Set()};   // baseline for the next remote diff
+let savedCloudTimestamp = 0;
+try { savedCloudTimestamp = Number(localStorage.getItem(CLOUD_STATUS_KEY)) || 0; } catch {}
+const cloudSync = {
+  phase:navigator.onLine ? 'idle' : 'offline',
+  active:0,
+  failed:false,
+  lastSuccess:savedCloudTimestamp,
+};
+
+function cloudTime(timestamp){
+  if (!timestamp) return 'Not synchronized yet';
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle:'medium',timeStyle:'short'
+  }).format(new Date(timestamp));
+}
+function renderCloudStatus(){
+  const title = document.getElementById('syncCardTitle');
+  const detail = document.getElementById('syncCardDetail');
+  const label = document.getElementById('syncStatusText');
+  if (!title || !detail || !label) return;
+
+  let stateName = 'local';
+  let short = 'Local only';
+  let heading = 'Saved on this device';
+  let copy = supabase
+    ? 'Sign in to keep your voyage synchronized across devices.'
+    : 'Cloud synchronization is not configured. Your voyage remains available on this device.';
+
+  if (state.user?.id && !navigator.onLine){
+    stateName = 'offline'; short = 'Offline'; heading = 'Saved locally · offline';
+    copy = cloudSync.lastSuccess ? `Last cloud save: ${cloudTime(cloudSync.lastSuccess)}` : 'No cloud save has completed on this device yet.';
+  } else if (state.user?.id && cloudSync.active){
+    stateName = 'syncing'; short = 'Syncing'; heading = 'Synchronizing voyage…';
+    copy = cloudSync.lastSuccess ? `Last cloud save: ${cloudTime(cloudSync.lastSuccess)}` : 'Creating the first cloud save for this device.';
+  } else if (state.user?.id && cloudSync.phase === 'error'){
+    stateName = 'error'; short = 'Sync failed'; heading = 'Cloud save needs attention';
+    copy = cloudSync.lastSuccess ? `Last successful cloud save: ${cloudTime(cloudSync.lastSuccess)}` : 'No cloud save has completed on this device yet.';
+  } else if (state.user?.id && cloudSync.lastSuccess){
+    stateName = 'saved'; short = 'Cloud saved'; heading = 'Cloud save is up to date';
+    copy = `Last successful synchronization: ${cloudTime(cloudSync.lastSuccess)}`;
+  } else if (state.user?.id){
+    stateName = 'saved'; short = 'Cloud ready'; heading = 'Ready to synchronize';
+    copy = 'No cloud save has completed on this device yet.';
+  }
+
+  syncStatusBtn.dataset.state = stateName;
+  syncStatusBtn.setAttribute('aria-label', `Cloud save status: ${short}`);
+  label.textContent = short;
+  title.textContent = heading;
+  detail.textContent = copy;
+  syncNow.textContent = state.user?.id ? (cloudSync.active ? 'Syncing…' : 'Sync now') : 'Sign in to sync';
+  syncNow.disabled = Boolean(state.user?.id && (cloudSync.active || !navigator.onLine));
+}
+function beginCloudSync(){
+  if (cloudSync.active === 0) cloudSync.failed = false;
+  cloudSync.active += 1;
+  cloudSync.phase = 'syncing';
+  renderCloudStatus();
+}
+function finishCloudSync(success){
+  if (!success) cloudSync.failed = true;
+  if (success){
+    cloudSync.lastSuccess = Date.now();
+    try { localStorage.setItem(CLOUD_STATUS_KEY, String(cloudSync.lastSuccess)); } catch {}
+  }
+  cloudSync.active = Math.max(0, cloudSync.active - 1);
+  cloudSync.phase = cloudSync.active ? 'syncing' : cloudSync.failed ? 'error' : 'saved';
+  renderCloudStatus();
+}
 
 /* seen units as [[a,b],[c],...] — compact for storage, cheap to diff */
 function toRanges(nums){
@@ -1692,9 +1776,9 @@ async function fetchRemote(){
   return data;
 }
 
-/* Union a fetched remote row into local state. Progress is additive, so this
-   can't lose a tick; unticks win by timestamp (mergeSeen). Settings only when
-   explicitly adopting them. Returns whether the union changed what's watched. */
+/* Union a fetched remote row into local state. Recent per-unit operations break
+   conflicts in mergeProgressState. Settings apply only when explicitly adopted.
+   Returns whether the reconciliation changed what's watched/read. */
 function mergeRemoteRow(data, applySettings){
   if (!data) return false;
   const before = {anime:new Set(seen.anime), manga:new Set(seen.manga)};
@@ -1746,6 +1830,8 @@ async function upsertLocal(){
    changes from elsewhere, refresh the views so they appear. */
 async function pushRemote(){
   if (!supabase || !state.user?.id) return;
+  beginCloudSync();
+  let success = false;
   try {
     /* Capture local removals before fetching. The old order fetched and unioned
        first, which could restore a unit before its removal was timestamped. */
@@ -1754,10 +1840,15 @@ async function pushRemote(){
     await upsertLocal();
     syncWarned = false;
     if (changed){ persist(); refreshViews(); }
+    success = true;
+    return true;
   } catch (e){
     // Don't fail silently — a broken cloud save is exactly what destroys trust.
     console.error('Grand Line Chart — cloud save failed:', e?.message || e);
     if (!syncWarned){ syncWarned = true; toast('Couldn’t save to the cloud — will keep retrying'); }
+    return false;
+  } finally {
+    finishCloudSync(success);
   }
 }
 
@@ -1774,12 +1865,21 @@ function mergeHistory(a, b){
    just changed on this device. */
 async function pullAndMerge({ applySettings = false } = {}){
   if (!supabase || !state.user?.id) return;
+  beginCloudSync();
+  let success = false;
   try {
     mergeRemoteRow(await fetchRemote(), applySettings);
     lastSyncedSeen = {anime:new Set(seen.anime), manga:new Set(seen.manga)};
     persist();
     await upsertLocal();          // write the merged result back (safe: local now ⊇ remote)
-  } catch (e){ console.error('Grand Line Chart — cloud load failed:', e?.message || e); }
+    success = true;
+    return true;
+  } catch (e){
+    console.error('Grand Line Chart — cloud load failed:', e?.message || e);
+    return false;
+  } finally {
+    finishCloudSync(success);
+  }
 }
 
 function setupAuth(){
@@ -1850,6 +1950,8 @@ document.addEventListener('visibilitychange', () => {
 });
 window.addEventListener('focus', syncDownOnFocus);
 window.addEventListener('pagehide', flushSync);
+window.addEventListener('offline', () => { cloudSync.phase = 'offline'; renderCloudStatus(); });
+window.addEventListener('online', () => { cloudSync.phase = cloudSync.lastSuccess ? 'saved' : 'idle'; renderCloudStatus(); syncDownOnFocus(); });
 
 function commit(){
   const before = new Set(crewAboard().map(c => c.id));
