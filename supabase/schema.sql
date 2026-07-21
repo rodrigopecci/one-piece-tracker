@@ -8,9 +8,10 @@
 -- One row per signed-in user. Progress is stored as ranges — see
 -- toRanges()/fromRanges() in app.js — a few hundred bytes even for a
 -- finished voyage. `removed` is a per-medium {unit: ms timestamp} map of
--- recent unticks, used to break ties when merging two devices (progress
--- merges by union; an untick only wins if it's newer than what it's
--- competing with).
+-- recent per-unit edits, used to break ties when merging two devices. The
+-- top-level anime/manga maps contain removal timestamps; an `added` child
+-- contains add/re-add timestamps. Keeping both inside this JSONB column avoids
+-- a schema migration while allowing the newest explicit action to win.
 create table if not exists public.progress (
   user_id      uuid primary key references auth.users(id) on delete cascade,
   anime_ranges jsonb not null default '[]',

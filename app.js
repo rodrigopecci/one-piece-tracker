@@ -9,6 +9,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { SUPABASE_URL, SUPABASE_ANON_KEY, supabaseConfigured } from './config.js';
 import { ThreeWorldMap } from './three-world.js?v=2';
+import { mergeProgressState, pruneChangeMap, setsEqual } from './sync-progress.js?v=1';
 
 const supabase = supabaseConfigured
   ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
@@ -429,12 +430,34 @@ const state = {
   user:null,
   history:{anime:{}, manga:{}},        // yyyy-mm-dd -> how many you marked that day
   settings:{public:false, crew:false, spoiler:true, showFiller:true, countFiller:true, voyageCollapsed:false},
-  removed:{anime:{}, manga:{}},        // unit -> ms timestamp, recently unticked (merge tiebreak)
+  removed:{anime:{}, manga:{}},        // unit -> ms timestamp, recently unticked
+  added:{anime:{}, manga:{}},          // unit -> ms timestamp, recently ticked/re-ticked
 };
 const seen = {anime:new Set(), manga:new Set()};
 let selected = null, hovered = null, activeSea = 'all';
 const openArcs = new Set();
 const peeked = new Set();
+
+/* Record the user's operation at the same moment the visible set changes.
+   Waiting until the cloud write used to let its stale checked range merge the
+   unit back in before an uncheck had a timestamp. */
+function markSeen(med, unit, at = Date.now()){
+  const changed = !seen[med].has(unit);
+  seen[med].add(unit);
+  if (changed || state.removed[med][unit]) state.added[med][unit] = at;
+  delete state.removed[med][unit];
+  return changed;
+}
+function unmarkSeen(med, unit, at = Date.now()){
+  if (!seen[med].delete(unit)) return false;
+  state.removed[med][unit] = at;
+  delete state.added[med][unit];
+  return true;
+}
+function clearSeen(med){
+  const at = Date.now();
+  for (const unit of [...seen[med]]) unmarkSeen(med, unit, at);
+}
 
 const medium = () => state.medium;
 const unitWord  = () => medium()==='anime' ? 'episode' : 'chapter';
@@ -715,7 +738,7 @@ document.getElementById('qlogMark').onclick = () => {
   const med = medium();
   const u = nextUnitToMark(med);
   if (u === null) return;
-  seen[med].add(u);
+  markSeen(med, u);
   recordProgress(1);
   commit();                          // re-renders map, book, crew, pose + quick-log
 };
@@ -979,8 +1002,8 @@ function fillUnitModal(){
   const mark = document.getElementById('umMark'), has = seen[med].has(u);
   mark.textContent = has ? '✓ Marked — tap to unmark' : `Mark ${med === 'anime' ? 'watched' : 'read'}`;
   mark.onclick = () => {
-    if (seen[med].has(u)) seen[med].delete(u);
-    else { seen[med].add(u); recordProgress(1); }
+    if (seen[med].has(u)) unmarkSeen(med, u);
+    else { markSeen(med, u); recordProgress(1); }
     commit(); fillUnitModal();
   };
   const thr = document.getElementById('umThrough');
@@ -1006,7 +1029,7 @@ function renderNowReading(isle, useUnits, shielded){
   document.getElementById('nrUnit').onclick = () => openUnit(cur);
   const mark = document.getElementById('nrMark');
   mark.textContent = `Mark ${med === 'anime' ? 'watched' : 'read'} & go to next`;
-  mark.onclick = () => { seen[med].add(cur); recordProgress(1); commit(); };  // commit re-runs select → advances
+  mark.onclick = () => { markSeen(med, cur); recordProgress(1); commit(); };  // commit re-runs select → advances
 }
 
 function renderBook(){
@@ -1048,8 +1071,8 @@ function renderBook(){
       const all = done===units.length;
       let added = 0;
       units.forEach(u => {
-        if (all) seen[medium()].delete(u);
-        else if (!seen[medium()].has(u)){ seen[medium()].add(u); added++; }
+        if (all) unmarkSeen(medium(), u);
+        else if (markSeen(medium(), u)) added++;
       });
       recordProgress(added);
       commit();
@@ -1092,8 +1115,8 @@ function renderBook(){
         t.setAttribute('aria-label', `${unitWordC()} ${u}${anime ? ', ' + EP_TYPE_LABEL[ty] : ''}`);
         t.textContent = seen[medium()].has(u) ? '\u2713' : '';
         t.onclick = () => {
-          if (seen[medium()].has(u)) seen[medium()].delete(u);
-          else { seen[medium()].add(u); recordProgress(1); }
+          if (seen[medium()].has(u)) unmarkSeen(medium(), u);
+          else { markSeen(medium(), u); recordProgress(1); }
           commit();
         };
         const nm = document.createElement('button');
@@ -1144,7 +1167,7 @@ function markThrough(u){
   // clearing here used to silently wipe progress past an earlier-clicked unit.
   const before = seen[medium()].size;
   for (const a of arcsFor(medium()))
-    for (const x of unitsOf(a, medium())) if (x <= u) seen[medium()].add(x);
+    for (const x of unitsOf(a, medium())) if (x <= u) markSeen(medium(), x);
   recordProgress(Math.max(0, seen[medium()].size - before));
   commit();
 }
@@ -1535,7 +1558,7 @@ sFiller.onclick = () => {
   persist(); renderSettings(); renderTally(); draw();
 };
 document.getElementById('resetVoyage').onclick = () => {
-  seen.anime.clear(); seen.manga.clear(); peeked.clear();
+  clearSeen('anime'); clearSeen('manga'); peeked.clear();
   state.history = {anime:{}, manga:{}};
   persist(); renderBook(); renderCrew(); renderQuickLog(); deselect(); draw();
   closeModal('settingsModal');
@@ -1584,21 +1607,24 @@ function fromRanges(ranges){
   return out;
 }
 
-const REMOVED_WINDOW = 45*864e5;                  // forget unticks older than this
-function pruneRemoved(map){
-  const cutoff = Date.now() - REMOVED_WINDOW;
-  for (const u in map) if (map[u] < cutoff) delete map[u];
-  return map;
+const CHANGE_WINDOW = 45*864e5;                  // recent operations beat stale devices
+function pruneProgressChanges(){
+  const cutoff = Date.now() - CHANGE_WINDOW;
+  for (const med of ['anime','manga']){
+    pruneChangeMap(state.removed[med], cutoff);
+    pruneChangeMap(state.added[med], cutoff);
+  }
 }
 
 const snapshot = () => JSON.stringify({
   medium: state.medium,
   seen: {anime:[...seen.anime], manga:[...seen.manga]},
   user: state.user, settings: state.settings, history: state.history,
-  removed: state.removed,
+  removed: state.removed, added: state.added,
 });
 
 function persist(){
+  diffProgressChanges();
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => {
     try { localStorage.setItem(KEY, snapshot()); }
@@ -1616,7 +1642,15 @@ function restore(){
     if (d.user) state.user = d.user;
     if (d.history) state.history = d.history;
     if (d.settings) Object.assign(state.settings, d.settings);
-    if (d.removed) state.removed = d.removed;
+    if (d.removed){
+      state.removed.anime = d.removed.anime || {};
+      state.removed.manga = d.removed.manga || {};
+    }
+    const restoredAdded = d.added || d.removed?.added;
+    if (restoredAdded){
+      state.added.anime = restoredAdded.anime || {};
+      state.added.manga = restoredAdded.manga || {};
+    }
     (d.seen?.anime||[]).forEach(u => seen.anime.add(u));
     (d.seen?.manga||[]).forEach(u => seen.manga.add(u));
   } catch {}
@@ -1624,19 +1658,29 @@ function restore(){
 }
 
 /* ---- Supabase: cross-device sync ----
-   Union by default — progress is additive, so merging never loses a tick.
-   Unticking is the rare exception, so it's tracked with a timestamp and
-   only wins the tiebreak when it's newer than whatever it's competing with. */
+   Ranges keep progress compact. Recent add/remove operation timestamps make
+   an intentional edit win over a stale cache on another device. */
 function scheduleRemoteSync(){
   if (!supabase || !state.user?.id) return;
   clearTimeout(remoteTimer);
   remoteTimer = setTimeout(pushRemote, 1500);
 }
 
-function diffRemoved(){
+function diffProgressChanges(){
   const now = Date.now();
   ['anime','manga'].forEach(med => {
-    lastSyncedSeen[med].forEach(u => { if (!seen[med].has(u)) state.removed[med][u] = now; });
+    lastSyncedSeen[med].forEach(u => {
+      if (!seen[med].has(u) && !state.removed[med][u]){
+        state.removed[med][u] = now;
+        delete state.added[med][u];
+      }
+    });
+    seen[med].forEach(u => {
+      if (!lastSyncedSeen[med].has(u) && !state.added[med][u]){
+        state.added[med][u] = now;
+        delete state.removed[med][u];
+      }
+    });
   });
 }
 
@@ -1653,27 +1697,42 @@ async function fetchRemote(){
    explicitly adopting them. Returns whether the union changed what's watched. */
 function mergeRemoteRow(data, applySettings){
   if (!data) return false;
-  const before = seen.anime.size + seen.manga.size;
+  const before = {anime:new Set(seen.anime), manga:new Set(seen.manga)};
   const remoteUpdatedAt = new Date(data.updated_at).getTime();
-  seen.anime = mergeSeen(seen.anime, fromRanges(data.anime_ranges), state.removed.anime, data.removed?.anime||{}, remoteUpdatedAt);
-  seen.manga = mergeSeen(seen.manga, fromRanges(data.manga_ranges), state.removed.manga, data.removed?.manga||{}, remoteUpdatedAt);
+  for (const med of ['anime','manga']){
+    const merged = mergeProgressState({
+      localSeen:seen[med],
+      remoteSeen:fromRanges(data[`${med}_ranges`]),
+      localRemoved:state.removed[med],
+      remoteRemoved:data.removed?.[med] || {},
+      localAdded:state.added[med],
+      remoteAdded:data.removed?.added?.[med] || {},
+      remoteUpdatedAt,
+    });
+    seen[med] = merged.seen;
+    state.removed[med] = merged.removed;
+    state.added[med] = merged.added;
+  }
   state.history = mergeHistory(state.history, data.history);
-  for (const med of ['anime','manga'])
-    state.removed[med] = pruneRemoved({ ...(data.removed?.[med]||{}), ...state.removed[med] });
+  pruneProgressChanges();
   if (applySettings && data.settings) Object.assign(state.settings, data.settings);
-  return (seen.anime.size + seen.manga.size) !== before;
+  return !setsEqual(before.anime, seen.anime) || !setsEqual(before.manga, seen.manga);
 }
 
 async function upsertLocal(){
-  diffRemoved();
-  pruneRemoved(state.removed.anime); pruneRemoved(state.removed.manga);
+  diffProgressChanges();
+  pruneProgressChanges();
   const { error } = await supabase.from('progress').upsert({
     user_id: state.user.id,
     anime_ranges: toRanges(seen.anime),
     manga_ranges: toRanges(seen.manga),
     history: state.history,
     settings: state.settings,
-    removed: state.removed,
+    removed: {
+      anime:state.removed.anime,
+      manga:state.removed.manga,
+      added:state.added,
+    },
     updated_at: new Date().toISOString(),
   }, { onConflict: 'user_id' });
   if (error) throw error;
@@ -1688,6 +1747,9 @@ async function upsertLocal(){
 async function pushRemote(){
   if (!supabase || !state.user?.id) return;
   try {
+    /* Capture local removals before fetching. The old order fetched and unioned
+       first, which could restore a unit before its removal was timestamped. */
+    diffProgressChanges();
     const changed = mergeRemoteRow(await fetchRemote(), false);
     await upsertLocal();
     syncWarned = false;
@@ -1699,14 +1761,6 @@ async function pushRemote(){
   }
 }
 
-function mergeSeen(localSet, remoteSet, localRemoved, remoteRemoved, remoteUpdatedAt){
-  const merged = new Set([...localSet, ...remoteSet]);
-  for (const u in remoteRemoved)
-    if (merged.has(+u) && remoteRemoved[u] > (localRemoved[u]||0)) merged.delete(+u);
-  for (const u in localRemoved)
-    if (merged.has(+u) && localRemoved[u] >= (remoteUpdatedAt||0)) merged.delete(+u);
-  return merged;
-}
 function mergeHistory(a, b){
   const out = {anime:{...a.anime}, manga:{...a.manga}};
   for (const med of ['anime','manga']) for (const day in (b?.[med]||{}))
@@ -1764,6 +1818,7 @@ function setupAuth(){
    page is hidden, flush both immediately — this is the difference between
    "I ticked it and it's gone" and a tracker you can trust. */
 function flushSync(){
+  diffProgressChanges();
   clearTimeout(saveTimer);
   try { localStorage.setItem(KEY, snapshot()); } catch {}
   if (supabase && state.user?.id){ clearTimeout(remoteTimer); pushRemote(); }   // merge-write: safe even from a stale tab

@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "test": "node --test",
     "serve": "python3 -m http.server 8000",
     "fetch:chapters": "node scripts/fetch-fandom.mjs --kind chapter",
     "fetch:episodes": "node scripts/fetch-fandom.mjs --kind episode"

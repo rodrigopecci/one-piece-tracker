@@ -246,11 +246,13 @@ Progress is a **set of integers**, stored as ranges:
 `toRanges()`/`fromRanges()` in `app.js` convert to/from the `seen` Sets. A few
 hundred bytes even for a finished voyage; skipped arcs are literal gaps.
 
-**Merge by union, not last-write-wins.** On sign-in, `pullAndMerge()` unions
-local and remote `seen` sets — progress is additive, so this can never lose a
-tick. Unticking is the rare exception: each side tracks recent removals as
-`{unit: timestamp}` in `state.removed`, and `mergeSeen()` only lets a removal
-win the tiebreak when it's newer than what it's competing with.
+**Merge by union, with per-unit conflict timestamps.** On sign-in,
+`pullAndMerge()` unions local and remote `seen` sets, then
+`mergeProgressState()` resolves edits to the same episode/chapter using recent
+`added` and `removed` timestamps. The newest explicit action wins, so a stale
+mobile cache cannot resurrect an intentional uncheck and an old removal cannot
+erase a later re-check. Both maps travel inside the existing `removed` JSONB
+payload, so this remains compatible with the original Supabase schema.
 
 Offline-first: `localStorage` is the working copy, Supabase is the backup —
 writes to it are debounced and best-effort (`pushRemote()`), never blocking.
