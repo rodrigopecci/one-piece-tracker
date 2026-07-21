@@ -1279,7 +1279,12 @@ function select(id, fly){
     };
   }
 
-  renderNowReading(isle, useUnits, shielded);
+  /* "Next to watch/read" belongs to the island where the voyage is currently
+     anchored. An island further along the route may be previewed, but its only
+     progress action should be "Sail here"; exposing its next unit would let the
+     user advance there before choosing to sail. */
+  if (id === positionIsland()) renderNowReading(isle, useUnits, shielded);
+  else document.getElementById('nowRead').style.display = 'none';
 
   panel.classList.add('open');
   panel.setAttribute('aria-hidden','false');
