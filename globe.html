@@ -54,8 +54,13 @@ function fillStrips(edgeFn,N,color){ctx.fillStyle=color;let run=[];
   for(let i=0;i<=N;i++){const{t,b}=edgeFn(i/N);if(t.vis&&b.vis)run.push({t,b});else flush();}flush();}
 function latBand(latC,hDeg,color){const a=(latC+hDeg)*DEG,b=(latC-hDeg)*DEG;
   fillStrips(u=>{const lon=2*Math.PI*u;return{t:project(lon,a),b:project(lon,b)};},240,color);}
-function lonBand(lonDeg,hDeg,color){const a=(lonDeg+hDeg)*DEG,b=(lonDeg-hDeg)*DEG;
-  fillStrips(u=>{const lat=-Math.PI/2+Math.PI*u;return{t:project(a,lat),b:project(b,lat)};},180,color);}
+// The Red Line: a constant-WIDTH wall along the 90/270 great circle. Offset the
+// centerline perpendicular (the X axis) by ±d so the wall keeps a uniform width
+// all the way over the poles — it doesn't taper like a longitude band would.
+function redWall(dDeg,color){const d=dDeg*DEG,sd=Math.sin(d),cd=Math.cos(d),cl=v=>Math.max(-1,Math.min(1,v));
+  const P3=(X,Y,Z)=>project(Math.atan2(Y,X),Math.asin(cl(Z)));
+  fillStrips(u=>{const s=2*Math.PI*u,cs=Math.cos(s)*cd,ss=Math.sin(s)*cd;
+    return{t:P3(sd,cs,ss),b:P3(-sd,cs,ss)};},240,color);}
 function overlap(a,b){return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;}
 function drawTrack(){
   const pts=ROUTE.map(id=>BYID[id]).filter(Boolean);if(pts.length<2)return;
@@ -82,8 +87,8 @@ function draw(){
   // with the sphere — seen edge-on from below they thin to a sliver at the rim.
   latBand(0,10,'rgba(6,27,38,0.82)');
   latBand(0,6.4,'rgba(118,180,199,0.42)');
-  // Red Line — filled meridian bands (also foreshorten)
-  lonBand(90,3.4,'rgba(176,58,46,0.94)');lonBand(270,3.4,'rgba(176,58,46,0.94)');
+  // Red Line — a constant-width wall along its great circle (uniform over the poles)
+  redWall(3.4,'rgba(176,58,46,0.94)');
   // sailed track (mocked: whole route)
   drawTrack();
   // islands + collision-avoided labels
