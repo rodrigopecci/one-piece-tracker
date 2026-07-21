@@ -69,9 +69,8 @@ function draw(){
   for(let lo=0;lo<360;lo+=30)poly(meridian(lo*DEG));
   // Calm Belts (dark) then the Grand Line (light) on top — just those two.
   ctx.lineCap='butt';
-  ctx.strokeStyle='rgba(6,27,38,0.82)';ctx.lineWidth=R*0.12;poly(parallel(8.5*DEG));poly(parallel(-8.5*DEG));
-  ctx.strokeStyle='rgba(120,182,201,0.34)';ctx.lineWidth=R*0.13;poly(parallel(0));
-  ctx.strokeStyle='rgba(239,230,210,0.30)';ctx.lineWidth=1.4;poly(parallel(0));
+  ctx.strokeStyle='rgba(6,27,38,0.82)';ctx.lineWidth=R*0.34;poly(parallel(0));   // Calm Belt zone (dark)
+  ctx.strokeStyle='rgba(118,180,199,0.40)';ctx.lineWidth=R*0.22;poly(parallel(0));  // Grand Line (light) painted over the middle — no gap, no border
   // Red Line
   ctx.lineCap='round';ctx.strokeStyle='rgba(176,58,46,0.94)';ctx.lineWidth=R*0.1;poly(meridian(90*DEG));poly(meridian(270*DEG));
   ctx.strokeStyle='rgba(90,22,15,0.85)';ctx.lineWidth=1.3;poly(meridian(90*DEG));poly(meridian(270*DEG));
