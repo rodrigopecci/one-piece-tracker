@@ -1,8 +1,8 @@
 # Grand Line Chart
 
-A One Piece progress tracker whose primary interface is a **map**, not a list.
-You mark episodes or chapters; your position, your wake, and your crew move
-across the world of One Piece.
+A One Piece progress tracker whose primary interface is a **rotatable 3D globe**,
+not a list. You mark episodes or chapters; your position, your wake, and your crew
+move across the world of One Piece.
 
 Personal hobby project. Free hosting only. No budget.
 
@@ -31,6 +31,10 @@ app.js                           all client-side logic (module script),
                                  including the ARCS array — the single source
                                  of truth for episodes/chapters
 config.js                        Supabase URL + anon key (public-safe); optional
+flat.html + app-flat.js          frozen backup of the old 2D SVG map; deployed
+                                 at /flat.html for a one-step revert if needed
+globe.html                       standalone globe prototype the live map grew
+                                 from (reference only, not load-bearing)
 data/
   chapters/<block>.json          scraped chapter titles + short summaries,
   episodes/<block>.json          100 units per block (block = n/100). Lazy-
@@ -54,29 +58,37 @@ to" stay a single file.
 
 ## The world model
 
-The One Piece world is a sphere with two great circles crossing it. Flattened to
-a 4000×2400 rectangle:
+The One Piece world is a sphere with two great circles crossing it, and the app
+renders it as a **real orthographic globe** (canvas 2D — the `THE GLOBE` block in
+`app.js`). You drag to rotate; there is no flat map anymore.
 
-- The **Grand Line** runs horizontally across the middle — a *corridor* 210 units
-  wide (`GL_TOP`..`GL_BOT`). It leaves the right edge and returns on the left,
-  because it is a circle.
-- The **Red Line** crosses it **twice**, so it appears as two vertical bars:
-  Reverse Mountain (`RL_A`, x=1000) and the holy land (`RL_B`, x=3000).
-- **Calm Belts** flank the Grand Line. Dead water. Only Amazon Lily and Impel
-  Down live there.
-- The four **Blues** are the four quadrants those two lines cut the world into.
+Island coordinates live in a 4000×2400 space (`x`,`y` on `CANON_ISLANDS`) mapped
+to the sphere by `lonlat(x,y)`: **x → longitude, y → latitude, the Grand Line =
+the equator.**
 
-Therefore: **Paradise** is between the two Red Line crossings, and the **New
-World** is the wrap-around half — which puts Elbaf, the current frontier of the
-route, back around near Reverse Mountain where the voyage began.
+- The **Grand Line** is the equator — a luminous band across the sphere's middle.
+- The **Red Line** is one great circle perpendicular to it, so its two crossings —
+  Reverse Mountain (lon 90°, `RL_A`=1000) and the holy land (lon 270°, `RL_B`=3000)
+  — are genuinely **antipodal**. It renders as a continuous constant-width **wall**
+  (`redWall()`) that passes over both poles. No wrap trick: the loop is real
+  geometry. The bands (`latBand()`) are filled between two latitude circles so they
+  foreshorten with the sphere instead of staying fixed-width.
+- **Calm Belts** flank the Grand Line (dark bands). Dead water. Only Amazon Lily
+  and Impel Down live there.
+- The four **Blues** are the quadrants the two lines cut the world into. In the
+  default view (centred on Reverse Mountain, the Red Line dividing left from right)
+  they sit like every One Piece map: **North top-left, East top-right, West
+  bottom-left, South bottom-right.**
 
-Because it's a cylinder, the map **pans around forever** — scroll off the New
-World and Paradise comes back in. This is real, not faked: everything
-positional is drawn at three tiles (`TILES = [-W, 0, W]`), the viewport wraps
-`view.x` modulo `W` (`clampView`), and each route leg is drawn the short way
-round. The ghost tiles are identical so the seam is invisible. Zoom-out is
-capped at one world width (`MAX_W = W`) — seeing more than the full
-circumference is redundant and keeps three tiles enough to cover the view.
+**Paradise** is the equatorial half between the two Red Line crossings; the **New
+World** is the other half — which puts Elbaf, the frontier of the route, back
+around near Reverse Mountain where the voyage began.
+
+The globe only shows one hemisphere at a time, so island positions are
+**compressed** from the flat op-maps layout to stay readable in a single view —
+order and relative arrangement match op-maps, absolute spacing is squeezed. The
+old flat SVG map (infinite cylinder pan, `TILES`, `clampView`) is gone; it
+survives as a one-step backup at **`flat.html`** / **`app-flat.js`** (see Deploy).
 
 Island coordinates are an editorial reading. Oda never published them, fan maps
 disagree, and that is fine — but the *skeleton* above is not negotiable, and
@@ -183,6 +195,11 @@ public). Live at `https://rodrigopecci.github.io/one-piece-tracker/`. Every
 push to `main` redeploys automatically. (Cloudflare Pages would also work and
 was the original plan, but GitHub Pages keeps everything on one platform and
 this app needs nothing Cloudflare-specific.)
+
+**Flat-map backup:** the pre-globe 2D map is frozen at `flat.html` + `app-flat.js`
+and deployed at `/flat.html`. If the globe ever needs pulling, that page still
+works standalone, and `cp flat.html index.html && cp app-flat.js app.js` reverts
+the live app in one step (both read the same `config.js`).
 
 The app uses relative asset paths, so it runs fine under the `/one-piece-tracker/`
 subpath.
@@ -341,26 +358,28 @@ Pose actually does, which is record where you are and point at what comes next.
 
 The chart is *rendered richly within that identity*, not flattened to bare
 strokes — a deliberate line we held when the alternative (op-maps.com's
-illustrated look) was on the table. What that means concretely:
+illustrated look) was on the table. It is now a **canvas orthographic globe**
+(the flat SVG chart it grew out of is backed up in `flat.html`). Concretely:
 
-- **Sea** — depth gradient plus faint horizontal swell behind the grid.
-- **Red Line** — a continent-tall mountain *wall*, not a bar: an irregular
-  coastline down both sides (a deterministic function of `y`, so all three
-  wrap-tiles match), a horizontal cliff→sunlit-crest→cliff gradient
-  (`#redWall`), rock texture, and a jagged ridge spine.
-- **Grand Line** — a luminous corridor (`#glGlow`) with flowing current
-  streamlines threaded down the channel.
-- **Islands** — still circles, but *charted* ones: a soft shadow pool
-  (`#isleShadow`) lifting them off the sea, a light-from-top-left land dome
-  (`#isleSheen`), a coastline stroke, sized by importance. The state colour
-  (sailed red / here brass / filler yellow) stays the primary fill — beauty
-  is layered around progress, never over it.
+- **Sea** — a radial depth gradient forming the lit sphere, faint graticule.
+- **Red Line** — a continent-tall constant-width **wall** (`redWall()`) running
+  pole to pole through both antipodal crossings; "RED LINE" set vertically on it.
+- **Grand Line** — a luminous equatorial band (`latBand()`), the two Calm Belts
+  as darker bands flanking it; all filled between latitude circles so they
+  foreshorten with the sphere. Region labels (Paradise/New World, the four Blues,
+  CALM BELT) are pinned to lon/lat and hidden on the far side.
+- **Islands** — circles (landmarks are diamonds), a soft shadow, sized by
+  importance, with a progress arc for partly-seen stops and an up-arrow for sky
+  islands. The state colour (sailed red / here brass / next brass-lite / filler
+  yellow) stays the primary fill — beauty is layered around progress, never over
+  it. The **sailed wake** is red per-leg where `stopReached`, faint dashed ahead
+  (a skipped island leaves a visible grey hole); anime detours branch off in
+  yellow dotted lines. Names are spoiler-gated to `???` via `isShielded`.
 
-All of this is plain SVG (gradients, paths, one extra shadow+sheen element
-per marker), kept light because the wrap renders everything three times.
-Illustrated per-island landmasses were considered and **rejected** — they'd
-mean fabricating coastlines Oda never drew, which is exactly the dishonesty
-the circle abstraction avoids.
+All plain canvas 2D, redrawn each frame (drag/zoom/hover), kept light. The globe
+reads the same progress state the flat map did — swapping the renderer, not the
+model. Illustrated per-island landmasses were considered and **rejected** —
+they'd mean fabricating coastlines Oda never drew.
 
 When the data and my assumptions disagree, **the data wins**. It has already
 caught me twice.

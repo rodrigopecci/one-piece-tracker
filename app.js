@@ -129,57 +129,57 @@ const CANON_ISLANDS = [
    b:'The kingdom of the okama on Momoiro Island — a riot of colour, cooking and attitude.',
    lore:'A nation devoted to living exactly as one pleases, where the New Kama Kenpo is a genuine martial art. Its flamboyant queen is also one of the Revolutionary Army’s most formidable commanders.'},
 
-  {id:'dawn-island', n:'Dawn Island', x:2150, y:2010, sea:'east', type:'island', major:true,
+  {id:'dawn-island', n:'Dawn Island', x:1860, y:600, sea:'east', type:'island', major:true,
    b:'Foosha Village, the Goa Kingdom, and the Grey Terminal. Where the voyage began.',
    lore:'An East Blue island split between a gilded city and the vast rubbish-heap beneath it. In its forests three sworn brothers grew up dreaming of the day each would sail his own sea.'},
-  {id:'shells-town', n:'Shells Town', x:2565, y:1900, sea:'east', type:'island', major:true,
+  {id:'shells-town', n:'Shells Town', x:1740, y:520, sea:'east', type:'island', major:true,
    b:'A Marine base run by a captain who let his son do the ruling. A swordsman was tied up in its yard.',
    lore:'An East Blue garrison where a Marine captain rules by fear and lets his spoiled son do as he likes. A soon-to-be-notorious swordsman is bound to a post in its yard, refusing to beg for his life.'},
-  {id:'orange-town', n:'Orange Town', x:2350, y:1735, sea:'east', type:'island',
+  {id:'orange-town', n:'Orange Town', x:1600, y:600, sea:'east', type:'island',
    b:'A town emptied by a clown, its buildings taken apart piece by piece.',
    lore:'A seaside town methodically dismantled and driven out, house by house, by a clown-pirate’s crew that treats terror as entertainment.'},
-  {id:'syrup-village', n:'Syrup Village', x:1905, y:1880, sea:'east', type:'island',
+  {id:'syrup-village', n:'Syrup Village', x:1470, y:575, sea:'east', type:'island',
    b:'A quiet village on the Gecko Islands, where a boy cries pirate every morning.',
    lore:'A sleepy village on the Gecko Islands where a boy famous for false alarms guards a lonely mansion — and, for once, the pirates he shouts about turn out to be real.'},
-  {id:'baratie', n:'Baratie', x:1680, y:1690, sea:'east', type:'island', major:true,
+  {id:'baratie', n:'Baratie', x:1360, y:800, sea:'east', type:'island', major:true,
    b:'A restaurant that sails. The cooks fight as well as they cook, and nobody hungry is turned away.',
    lore:'A ship built as a floating restaurant on the open sea, crewed by cooks who brawl as fiercely as they plate. Its ironclad rule: no one who is starving is ever refused a meal.'},
-  {id:'conomi', n:'Conomi Islands', x:1400, y:1790, sea:'east', type:'island',
+  {id:'conomi', n:'Conomi Islands', x:1240, y:560, sea:'east', type:'island',
    b:'Tangerine groves, and a village paying tribute to fish-men. Home of a cartographer.',
    lore:'Tangerine groves in the East Blue crushed under a fish-man crew that taxes every villager. A young cartographer draws maps and hoards coins toward a desperate, secret bargain.'},
-  {id:'loguetown', n:'Loguetown', x:1160, y:1615, sea:'east', type:'island', major:true,
+  {id:'loguetown', n:'Loguetown', x:1110, y:820, sea:'east', type:'island', major:true,
    b:'The town of the beginning and the end: where the Pirate King was born, and where he died.',
    lore:'The East Blue town where the King of the Pirates was born and, years later, publicly executed. His final words on the scaffold lit the fuse of the Great Age of Pirates.'},
-  {id:'shimotsuki', n:'Shimotsuki Village', x:2790, y:2030, sea:'east', type:'island',
+  {id:'shimotsuki', n:'Shimotsuki Village', x:1935, y:745, sea:'east', type:'island',
    b:'A village with a dojo, a promise between two children, and a sword left behind.',
    lore:'An East Blue village built around a swordsman’s dojo, where a promise between two child rivals set one of them on a lifelong road toward becoming the world’s greatest blade.'},
 
-  {id:'flevance', n:'Flevance', x:1560, y:620, sea:'north', type:'island', major:true,
+  {id:'flevance', n:'Flevance', x:560, y:430, sea:'north', type:'island', major:true,
    b:'The White Town, rich on a white lead that was quietly killing everyone who touched it.',
    lore:'The North Blue’s White Town, made wealthy by a beautiful pale mineral its people never suspected was slowly poisoning them — a truth the wider world knew and chose to hide.'},
-  {id:'lvneel', n:'Lvneel Kingdom', x:1870, y:415, sea:'north', type:'island',
+  {id:'lvneel', n:'Lvneel Kingdom', x:650, y:620, sea:'north', type:'island',
    b:'The kingdom that sent an explorer to find a city of gold, and hanged him when he came back.',
    lore:'A North Blue kingdom whose explorer returned from a voyage to the sky with a wild tale of a golden city — and was executed for a lie the crown could not bring itself to believe.'},
-  {id:'spider-miles', n:'Spider Miles', x:2210, y:665, sea:'north', type:'island',
+  {id:'spider-miles', n:'Spider Miles', x:470, y:700, sea:'north', type:'island',
    b:'A scrapyard country of rust and rain, downstream of everything the North throws away.',
    lore:'A ruined North Blue country of endless rain and rusting scrap, where everything the north discards eventually washes up and is picked over by those left behind.'},
-  {id:'germa', n:'Germa Kingdom', x:2560, y:455, sea:'north', type:'roaming', major:true,
+  {id:'germa', n:'Germa Kingdom', x:740, y:470, sea:'north', type:'roaming', major:true,
    b:'A kingdom with no fixed shore. It sails, it fights other people’s wars, and it charges by the day.',
    lore:'A North Blue kingdom with no fixed coast — once a conqueror, now a science-army for hire. Its royal children were engineered as soldiers, and the Vinsmoke name is feared far beyond its origin.'},
-  {id:'karakuri', n:'Karakuri Island', x:1230, y:520, sea:'north', type:'island', major:true,
+  {id:'karakuri', n:'Karakuri Island', x:400, y:560, sea:'north', type:'island', major:true,
    b:'A frozen North Blue island of scrap, cola and clockwork, where tinkerers build the impossible.',
    lore:'The birthplace of the world’s foremost inventor — and of others who came up among its junkyards and steam. Cola drives everything here, and nothing is ever truly thrown away.'},
 
-  {id:'ohara', n:'Ohara', x:480, y:600, sea:'west', type:'island', major:true,
+  {id:'ohara', n:'Ohara', x:540, y:1800, sea:'west', type:'island', major:true,
    b:'An island of scholars and one enormous tree of books. The World Government erased it in an afternoon.',
    lore:'A West Blue island of archaeologists gathered around a vast Tree of Knowledge, who dared to study the one stretch of history the World Government forbids — and paid for it with everything they had.'},
-  {id:'baterilla', n:'Baterilla', x:560, y:1900, sea:'south', type:'island',
+  {id:'baterilla', n:'Baterilla', x:1280, y:1760, sea:'south', type:'island',
    b:'A quiet island the Marines combed for a year, hunting a child who was never born on time.',
    lore:'A South Blue island the Marines searched for over a year, hunting a newborn they never found — because its mother did the impossible and refused to let it be born on schedule.'},
-  {id:'sorbet', n:'Sorbet Kingdom', x:3620, y:1860, sea:'south', type:'island',
+  {id:'sorbet', n:'Sorbet Kingdom', x:1540, y:1715, sea:'south', type:'island',
    b:'A small kingdom whose king gave everything away, and then gave himself away too.',
    lore:'A small South Blue kingdom whose gentle king surrendered his wealth, his crown and at last his own freedom, for reasons the world would not understand until long afterward.'},
-  {id:'torino', n:'Torino Kingdom', x:1720, y:2090, sea:'south', type:'island',
+  {id:'torino', n:'Torino Kingdom', x:1400, y:1930, sea:'south', type:'island',
    b:'A South Blue island of enormous birds and the tiny people who ride them, above a jungle of beasts.',
    lore:'Its people live high in a single giant tree, safe from the monstrous animals prowling the jungle floor, hunting and travelling on the backs of great birds. Outsiders seldom arrive, and seldom leave unchanged.'},
 
@@ -366,8 +366,8 @@ const canonById = Object.fromEntries(CANON_ISLANDS.map(i => [i.id, i]));
    belongs in the East Blue, not in the dead water they cross on the way. */
 function zoneFor(sea){
   if (sea === 'paradise' || sea === 'newworld') return [GL_TOP + 22, GL_BOT - 22];
-  if (sea === 'east' || sea === 'south')        return [SOUTH_EDGE + 70, H - 90];
-  return [90, NORTH_EDGE - 70];                                  // north / west
+  if (sea === 'west' || sea === 'south')        return [SOUTH_EDGE + 70, H - 90];
+  return [90, NORTH_EDGE - 70];                                  // north / east (both top)
 }
 function makeFillerIslands(){
   const out = [];
@@ -536,575 +536,251 @@ function countedSeen(med){
   return n;
 }
 
-/* ============================================================
-   STATIC CHART
-   ============================================================ */
-const SVG = document.getElementById('chart');
-const NS = 'http://www.w3.org/2000/svg';
-const el = (t,a={}) => { const n = document.createElementNS(NS,t); for (const k in a) n.setAttribute(k,a[k]); return n; };
-
-/* The world is a horizontal cylinder of width W: the Grand Line leaves the
-   right edge and returns on the left. To let the map pan around it forever,
-   everything positional is rendered at three tiles — one world-width left,
-   centre, one right — and the viewport wraps modulo W (see clampView). The
-   ghost tiles are identical, so crossing the seam is seamless. */
-const TILES = [-W, 0, W];
-
-/* full-width background bands only need to span the visible range across all
-   three tiles, not be tiled themselves */
-const BG_X0 = -W - 400, BG_X1 = 2*W + 400, BG_W = BG_X1 - BG_X0;
-/* vertical extent for the grid + Red Line: generous enough that at full
-   zoom-out they still reach top and bottom of any viewport, including tall
-   portrait phones (where the view can be much taller than the world). */
-const BG_Y0 = -1200, BG_Y1 = H + 6000;
-
-/* faint swell across the open sea — gentle horizontal waves, behind the grid
-   and the Grand Line band, so they only read in the open Blues */
-const swell = document.getElementById('swell');
-const wavePath = (y0, amp, period, phase) => {
-  let d = '';
-  for (let x=BG_X0; x<=BG_X1; x+=40){
-    const y = y0 + amp*Math.sin(x/period + phase);
-    d += (x===BG_X0 ? 'M' : 'L') + x.toFixed(1) + ' ' + y.toFixed(1) + ' ';
-  }
-  return d;
-};
-for (let i=0;i<18;i++){
-  const y0 = -200 + i*(H+400)/17;
-  swell.appendChild(el('path',{d:wavePath(y0, 9, 250, i*1.7), fill:'none', stroke:'#3C7E92', 'stroke-width':1.1, opacity:.07}));
-}
-
-const grat = document.getElementById('graticule');
-for (let x=BG_X0;x<=BG_X1;x+=125) grat.appendChild(el('line',{x1:x,y1:BG_Y0,x2:x,y2:BG_Y1,stroke:'var(--grid)','stroke-width':.7,opacity:(((x%W)+W)%W%500===0?.3:.1)}));
-for (let y=BG_Y0;y<=BG_Y1;y+=125) grat.appendChild(el('line',{x1:BG_X0,y1:y,x2:BG_X1,y2:y,stroke:'var(--grid)','stroke-width':.7,opacity:(y%500===0?.3:.1)}));
-
-const belts = document.getElementById('belts');
-[GL_Y-GL_HALF-BELT, GL_Y+GL_HALF].forEach(y => {
-  belts.appendChild(el('rect',{x:BG_X0,y,width:BG_W,height:BELT,fill:'var(--calm)',opacity:.7}));
-  belts.appendChild(el('rect',{x:BG_X0,y,width:BG_W,height:BELT,fill:'url(#stipple)',opacity:.55}));
-  belts.appendChild(el('line',{x1:BG_X0,y1:y,x2:BG_X1,y2:y,stroke:'#2C6E82','stroke-width':1,opacity:.35}));
-});
-[GL_Y-GL_HALF-BELT/2, GL_Y+GL_HALF+BELT/2].forEach(y => {
-  TILES.forEach(dx => {
-    const n = el('text',{x:400+dx,y:y+5,class:'zonelbl',fill:'#5FA6BC','font-size':22,opacity:.4});
-    n.textContent='Calm Belt'; belts.appendChild(n);
-  });
-});
-
-const glband = document.getElementById('glband');
-/* luminous corridor: a soft glow bleeding past the banks, then the shallow
-   band. The directional chevrons below carry the sense of current on their
-   own — extra streamlines just clashed with them. */
-glband.appendChild(el('rect',{x:BG_X0,y:GL_Y-GL_HALF-46,width:BG_W,height:GL_HALF*2+92,fill:'url(#glGlow)'}));
-glband.appendChild(el('rect',{x:BG_X0,y:GL_Y-GL_HALF,width:BG_W,height:GL_HALF*2,fill:'var(--sea-shallow)',opacity:.42}));
-[-1,1].forEach(s => glband.appendChild(el('line',{x1:BG_X0,y1:GL_Y+s*GL_HALF,x2:BG_X1,y2:GL_Y+s*GL_HALF,stroke:'#EFE6D2','stroke-width':2,opacity:.4})));
-glband.appendChild(el('line',{x1:BG_X0,y1:GL_Y,x2:BG_X1,y2:GL_Y,stroke:'#EFE6D2','stroke-width':1,opacity:.5,'stroke-dasharray':'26 18'}));
-const nearRedLine = x => [RL_A,RL_B].some(rl => TILES.some(dx => Math.abs(x-(rl+dx))<90));
-for (let x=BG_X0+100;x<BG_X1;x+=260){
-  if (nearRedLine(x)) continue;
-  glband.appendChild(el('path',{d:`M${x-14} ${GL_Y-14} L${x+8} ${GL_Y} L${x-14} ${GL_Y+14}`,fill:'none',stroke:'#9FD4E4','stroke-width':2.4,opacity:.28,'stroke-linecap':'round'}));
-}
-
-/* The Red Line is a continent-tall mountain wall, not a bar: an irregular
-   coastline down both sides, a horizontal cliff→crest→cliff gradient so it
-   reads as lit rock, texture, and a jagged ridge line down the spine.
-   The coastline is a deterministic function of y, so all three tiles match. */
-const lines = document.getElementById('lines');
-const RL_TOP = BG_Y0, RL_BOT = BG_Y1, RL_STEP = 40;
-const coast = (y, seed) => 11*Math.sin(y/71 + seed) + 6*Math.sin(y/29 + seed*2.3) + 3*Math.sin(y/13 + seed);
-function redBandPath(x){
-  let d = '';
-  for (let y=RL_TOP; y<=RL_BOT; y+=RL_STEP) d += (y===RL_TOP?'M':'L') + (x+RL_HALF+coast(y,1.0)).toFixed(1) + ' ' + y + ' ';
-  for (let y=RL_BOT; y>=RL_TOP; y-=RL_STEP) d += 'L' + (x-RL_HALF-coast(y,4.2)).toFixed(1) + ' ' + y + ' ';
-  return d + 'Z';
-}
-function ridgePath(x){
-  let d = '';
-  for (let y=RL_TOP; y<=RL_BOT; y+=RL_STEP) d += (y===RL_TOP?'M':'L') + (x + 5*Math.sin(y/38) + 3*Math.sin(y/16)).toFixed(1) + ' ' + y + ' ';
-  return d;
-}
-TILES.forEach(dx => [RL_A,RL_B].forEach(rl => {
-  const x = rl + dx, band = redBandPath(x);
-  lines.appendChild(el('path',{d:band,fill:'url(#redWall)'}));
-  lines.appendChild(el('path',{d:band,fill:'url(#rock)',opacity:.5}));
-  lines.appendChild(el('path',{d:band,fill:'none',stroke:'#5A160F','stroke-width':2.6,'stroke-linejoin':'round'}));
-  lines.appendChild(el('path',{d:ridgePath(x),fill:'none',stroke:'#E88B7E','stroke-width':1.4,opacity:.32,'stroke-linecap':'round'}));
-  [420,2000].forEach(y => {
-    const t = el('text',{x:x+6,y,class:'zonelbl',fill:'#F6D2CB','font-size':20,opacity:.8,transform:`rotate(-90 ${x+6} ${y})`,'text-anchor':'middle'});
-    t.textContent='Red Line'; lines.appendChild(t);
-  });
-}));
-/* Paradise sits between the two Red Line crossings; the New World is the
-   wrap-around half, so its label rides the seam (x = 0 ≡ W). */
-TILES.forEach(dx => [[2000,'Paradise'],[W,'New World']].forEach(([x,txt]) => {
-  const t = el('text',{x:x+dx,y:GL_Y-GL_HALF-30,class:'zonelbl',fill:'#EFE6D2','font-size':26,'text-anchor':'middle',opacity:.5});
-  t.textContent=txt; lines.appendChild(t);
-}));
-
-const seaLayer = document.getElementById('sealabels');
-const seaLabelEls = [];
-TILES.forEach(dx => [['North Blue',2000,430],['East Blue',2000,2070],['West Blue',W,290],['South Blue',W,2100]].forEach(([txt,x,y]) => {
-  const t = el('text',{x:x+dx,y,class:'sealbl','font-size':104});
-  t.textContent=txt; seaLayer.appendChild(t); seaLabelEls.push(t);
-}));
-
-const tetherLayer = document.getElementById('tethers');
-TILES.forEach(dx => TETHERS.forEach(([a,b]) => {
-  const A = byId[a], B = byId[b];
-  tetherLayer.appendChild(el('line',{x1:A.x+dx,y1:A.y,x2:B.x+dx,y2:B.y,stroke:'#9FD4E4','stroke-width':1.4,'stroke-dasharray':'4 10',opacity:.45}));
-}));
-
-/* ---- yellow detours: canon island → filler island → canon island ---- */
-const detourLayer = document.getElementById('detours');
-let detourEls = {};
-function buildDetourLines(){
-  detourLayer.innerHTML = '';
-  detourEls = {};
-  FILLER_ISLANDS.forEach(f => {
-    const A = byId[f.from], B = byId[f.to];
-    const els = [];
-    TILES.forEach(dx => {
-      const l1 = el('line',{x1:A.x+dx,y1:A.y,x2:f.x+dx,y2:f.y,'stroke-linecap':'round'});
-      const l2 = el('line',{x1:f.x+dx,y1:f.y,x2:B.x+dx,y2:B.y,'stroke-linecap':'round'});
-      detourLayer.append(l1,l2);
-      els.push(l1,l2);
-    });
-    detourEls[f.id] = els;
-  });
-}
-buildDetourLines();
-
-/* ---- the main line ----
-   Each leg is drawn the short way round the cylinder (a leg spanning more
-   than half the world wraps across the seam), then replicated at all three
-   tiles so it stays continuous wherever you pan. */
-const routeLayer = document.getElementById('route');
-let legEls = [];
-function buildRoute(){
-  routeLayer.innerHTML = '';
-  legEls = [];
-  for (let i=0; i<STOPS.length-1; i++){
-    const a = byId[STOPS[i].island], b = byId[STOPS[i+1].island];
-    if (!a || !b || a.id === b.id){ legEls.push([]); continue; }
-    let bx = b.x;
-    if (Math.abs(bx - a.x) > W/2) bx += (bx > a.x ? -1 : 1) * W;   // shortest way round
-    legEls.push(TILES.map(dx => {
-      const l = el('line',{x1:a.x+dx,y1:a.y,x2:bx+dx,y2:b.y,'stroke-linecap':'round'});
-      routeLayer.appendChild(l);
-      return l;
-    }));
-  }
-}
-
-/* ---- markers ---- */
-const markerLayer = document.getElementById('markers');
-const labelLayer  = document.getElementById('labels');
-let nodes = {};
-function buildMarkers(){
-  markerLayer.innerHTML = ''; labelLayer.innerHTML = '';
-  nodes = {};
-  ISLANDS.forEach(isle => TILES.forEach((dx, ti) => {
-    const wx = isle.x + dx;                       // this instance's world x
-    const g = el('g',{class:'island',tabindex: ti===1 ? 0 : -1,role:'button','data-id':isle.id,
-      'aria-label':`${isle.n}, ${SEAS[isle.sea].label}`});
-    const halo = el('circle',{class:'halo',cx:wx,cy:isle.y,fill:'none',stroke:'#5FA6BC','stroke-width':.8,opacity:.14});
-    const shadow = el('circle',{class:'shadow',cx:wx,cy:isle.y,fill:'url(#isleShadow)','pointer-events':'none'});
-    const skyup = el('path',{class:'skyup',fill:'none',stroke:'#BFE6F2','stroke-width':2,
-      'stroke-linecap':'round','stroke-linejoin':'round',opacity:0,'pointer-events':'none'});
-    const ring = el('circle',{class:'ring',cx:wx,cy:isle.y,fill:'none',stroke:'var(--brass)','stroke-width':1.3,opacity:.75});
-    if (isle.type==='sky') ring.setAttribute('stroke-dasharray','2 3');
-    if (isle.type==='undersea') ring.setAttribute('stroke-dasharray','5 4');
-    if (isle.type==='roaming') ring.setAttribute('stroke-dasharray','1 5');
-    if (isle.type==='filler') ring.setAttribute('stroke-dasharray','3 3');
-    const mk = (cls, extra) => isle.type==='landmark'
-      ? el('rect',{class:cls,...extra})
-      : el('circle',{class:cls,cx:wx,cy:isle.y,...extra});
-    const body = mk('body',{stroke:'var(--ink)','stroke-width':1});
-    const sheen = mk('sheen',{fill:'url(#isleSheen)','pointer-events':'none'});
-    const prog = el('circle',{class:'prog',cx:wx,cy:isle.y,fill:'none',stroke:'var(--voyage)',
-      'stroke-linecap':'round',opacity:0,'pointer-events':'none'});
-    const hit = el('circle',{class:'hit',cx:wx,cy:isle.y,fill:'transparent'});
-    g.append(halo,shadow,body,sheen,ring,prog,skyup,hit);
-    markerLayer.appendChild(g);
-    const lbl = el('text',{class:'lbl'});
-    lbl.textContent = isle.n;
-    labelLayer.appendChild(lbl);
-    nodes[`${isle.id}#${ti}`] = {g,halo,shadow,skyup,ring,prog,body,sheen,hit,lbl,isle,wx,w100:0};
-    g.addEventListener('click', e => { e.stopPropagation(); select(isle.id, true); });
-    g.addEventListener('keydown', e => { if (e.key==='Enter'||e.key===' '){ e.preventDefault(); select(isle.id,true); } });
-    g.addEventListener('pointerenter', () => { hovered = isle.id; draw(); });
-    g.addEventListener('pointerleave', () => { if (hovered===isle.id){ hovered=null; draw(); } });
-  }));
-}
-buildMarkers();
-
-/* ============================================================
-   VIEW + DRAW
-   ============================================================ */
-const view = {x:0,y:0,w:W,h:H};
-let scale = 1;
-/* Cap the zoom-out at one world width — the world is a cylinder, so seeing
-   more than its full circumference is redundant, and it keeps the three
-   tiles enough to always cover the viewport. */
-const MIN_W = 520, MAX_W = W;
-
-function fit(){
-  const r = SVG.getBoundingClientRect();
-  /* The map wraps horizontally, so "fit" isn't "show an edge-to-edge width"
-     (there is no edge) — it's the full vertical extent centred on Paradise,
-     never wider than one world. Computing it directly avoids the old bug
-     where an over-wide view got clamped and wrapped to the seam. */
-  view.w = Math.min(MAX_W, (H + 240) * (r.width / r.height));
-  view.h = view.w * (r.height / r.width);
-  view.x = W/2 - view.w/2;                 // Paradise sits at x = W/2
-  view.y = H/2 - view.h/2;
-  draw();
-}
-function clampView(){
-  const r = SVG.getBoundingClientRect();
-  view.w = Math.max(MIN_W, Math.min(MAX_W, view.w));
-  view.h = view.w * (r.height/r.width);
-  view.x = ((view.x % W) + W) % W;                 // wrap the pan — no left/right edge
-  const m = 900;
-  view.y = Math.max(-m, Math.min(H+m-view.h, view.y));
-}
-const BERTHS = [[1,0,'start'],[-1,0,'end'],[0,-1,'middle'],[0,1,'middle'],[1,-1,'start'],[1,1,'start']];
-const overlaps = (a,b) => a.x < b.x+b.w && a.x+a.w > b.x && a.y < b.y+b.h && a.y+a.h > b.y;
-
+/* Spoiler shield + filler visibility — small helpers the whole app reads. */
 const fillerShown = () => medium()==='anime' && state.settings.showFiller;
 const isShielded = id =>
   state.settings.spoiler && !peeked.has(id) && !reachedIslands().has(id)
   && id !== positionIsland() && !(byId[id].type==='filler' && seenIn(ARCS.find(a=>a.id===byId[id].arcId), medium()) > 0);
 
-function draw(){
-  clampView();
-  SVG.setAttribute('viewBox', `${view.x} ${view.y} ${view.w} ${view.h}`);
-  const r = SVG.getBoundingClientRect();
-  scale = r.width / view.w;
-  const k = 1/scale;
-
-  const here = positionIsland();
-  const next = nextStop();
-  const nextI = next ? next.island : null;
-  const reached = reachedIslands();
-
-  /* main line: a leg is red once you've reached the island it leads to.
-     Skip an arc and its leg stays grey — a visible hole in your wake. */
-  legEls.forEach((seg,i) => {
-    const to = STOPS[i+1];
-    const sailed = to && stopReached(to);
-    seg.forEach(l => {
-      l.setAttribute('stroke', sailed ? 'var(--voyage)' : 'rgba(239,230,210,.9)');
-      l.setAttribute('stroke-width', (sailed ? 3 : 1.4) * k);
-      l.setAttribute('opacity', sailed ? .9 : .16);
-      l.setAttribute('stroke-dasharray', sailed ? 'none' : `${6*k} ${9*k}`);
-    });
-  });
-
-  /* detours */
-  FILLER_ISLANDS.forEach(f => {
-    const els = detourEls[f.id];                    // 2 lines per tile, all styled alike
-    if (!fillerShown()){ els.forEach(l => l.style.display='none'); return; }
-    const arc = ARCS.find(a => a.id === f.arcId);
-    const done = seenIn(arc, 'anime'), total = unitsOf(arc,'anime').length;
-    const any = done > 0, all = done === total;
-    els.forEach(l => {
-      l.style.display='';
-      l.setAttribute('stroke', any ? 'var(--filler)' : 'rgba(227,179,65,.9)');
-      l.setAttribute('stroke-width', (any ? 2.4 : 1.2) * k);
-      l.setAttribute('opacity', all ? .85 : any ? .55 : .16);
-      l.setAttribute('stroke-dasharray', all ? 'none' : `${5*k} ${6*k}`);
-    });
-  });
-
-  const visible = [], obstacles = [];
-  for (const id in nodes){
-    const nd = nodes[id];
-    const {isle,g,halo,shadow,skyup,ring,prog,body,sheen,hit,lbl} = nd;
-
-    if (isle.type === 'filler' && !fillerShown()){ g.classList.add('gone'); lbl.style.display='none'; continue; }
-    g.classList.remove('gone');
-
-    const on = activeSea==='all' || isle.sea===activeSea;
-    g.classList.toggle('dim', !on);
-
-    const rr = (isle.major ? 11 : isle.type==='filler' ? 7 : 8) * k;
-    ring.setAttribute('r', rr);
-    halo.setAttribute('r', rr*2.3);
-    halo.style.opacity = (scale > .35 && isle.type!=='filler') ? .14 : 0;
-    hit.setAttribute('r', Math.max(rr*1.6, 18*k));
-
-    const br = (isle.major ? 6.5 : isle.type==='filler' ? 3.8 : 4.5) * k;
-    /* soft shadow pool, always a circle, nudged down to lift the island off the sea */
-    shadow.setAttribute('r', br*1.55);
-    shadow.setAttribute('cy', isle.y + br*0.42);
-    shadow.style.opacity = isle.type==='filler' ? .5 : 1;
-    /* Sky islands (Skypiea, Weatheria) sit in the Grand Line on a 2D map, so a
-       small up-arrow off the marker's right side is the subtle cue that they're
-       really up in the sky. */
-    if (isle.type==='sky'){
-      const ax = nd.wx + rr + 2.8*k, ay = isle.y, h = 3.2*k, aw = 1.8*k;
-      skyup.setAttribute('d', `M${ax} ${ay+h} L${ax} ${ay-h} M${ax-aw} ${ay-h+aw} L${ax} ${ay-h} L${ax+aw} ${ay-h+aw}`);
-      skyup.setAttribute('stroke-width', 1.3*k);
-      skyup.style.opacity = scale > .35 ? .9 : 0;
-    } else skyup.style.opacity = 0;
-    if (isle.type==='landmark'){
-      const set = n => { n.setAttribute('x', nd.wx-br); n.setAttribute('y', isle.y-br);
-        n.setAttribute('width', br*2); n.setAttribute('height', br*2);
-        n.setAttribute('transform', `rotate(45 ${nd.wx} ${isle.y})`); };
-      set(body); set(sheen);
-    } else { body.setAttribute('r', br); sheen.setAttribute('r', br); }
-
-    const isHere = isle.id===here;
-    const isNext = isle.id===nextI && !isHere;
-    const isSailed = reached.has(isle.id) && !isHere;
-
-    let ringCol='var(--brass)', ringOp=.7, ringW=1.3;
-    let fill = isle.type==='landmark' ? 'var(--lacquer)'
-             : isle.type==='undersea' ? 'var(--sea-shallow)'
-             : isle.type==='sky' ? '#DCEEF4'
-             : isle.type==='filler' ? 'rgba(8,32,45,.9)' : 'var(--land)';
-    if (isle.type==='sky') ringCol = '#9FD4E4';
-
-    if (isle.type === 'filler'){
-      const arc = ARCS.find(a => a.id === isle.arcId);
-      const done = seenIn(arc,'anime'), total = unitsOf(arc,'anime').length;
-      ringCol = 'var(--filler)';
-      ringOp = done ? 1 : .45;
-      ringW = done ? 2 : 1.2;
-      if (done === total) fill = 'var(--filler)';
-      else if (done) fill = 'rgba(227,179,65,.4)';
-    } else {
-      if (isSailed){ ringCol='var(--voyage)'; ringOp=.95; ringW=2.2; fill='var(--voyage)'; }
-      if (isNext){ ringCol='var(--brass-lite)'; ringOp=1; ringW=2.2; }
-      if (isHere){ ringCol='var(--brass-lite)'; ringOp=1; ringW=3; fill='var(--brass)'; }
-    }
-    if (isle.id===selected){ ringCol='var(--brass-lite)'; ringW=2.6; ringOp=1; }
-
-    ring.setAttribute('stroke', ringCol);
-    ring.setAttribute('stroke-width', ringW*k);
-    ring.style.opacity = ringOp;
-    body.setAttribute('fill', fill);
-
-    /* Intra-island progress: the island you're on gets a red arc that fills as
-       you watch through it — so parking on one island for 40 episodes still
-       shows movement, even though the route line to the next island can't. */
-    let showProg = false;
-    if (isHere && isle.type !== 'filler'){
-      const p = islandProgress(isle.id);
-      if (p && p.done > 0 && p.done < p.total){
-        const pr = rr + 3.4*k, C = 2*Math.PI*pr;
-        prog.setAttribute('r', pr);
-        prog.setAttribute('stroke-width', 2.6*k);
-        prog.setAttribute('stroke-dasharray', `${(p.frac*C).toFixed(1)} ${C.toFixed(1)}`);
-        prog.setAttribute('transform', `rotate(-90 ${nd.wx} ${isle.y})`);
-        prog.style.opacity = 1;
-        showProg = true;
-      }
-    }
-    if (!showProg) prog.style.opacity = 0;
-
-    const sx = (nd.wx-view.x)*scale, sy = (isle.y-view.y)*scale;
-    lbl.style.display='none';
-    if (!on || sx<-140 || sx>r.width+140 || sy<-80 || sy>r.height+80) continue;
-    obstacles.push({x:sx-rr*scale-2, y:sy-rr*scale-2, w:rr*scale*2+4, h:rr*scale*2+4});
-
-    let prio = 5;
-    if (isHere) prio=0;
-    else if (isNext || isle.id===selected) prio=1;
-    else if (isle.id===hovered) prio=2;
-    else if (isle.major) prio=3;
-    else if (isle.type==='filler') prio=5;
-    else prio=4;
-
-    visible.push({nd,sx,sy,rr:rr*scale,prio,isHere,isNext,isSailed});
-  }
-
-  const z = W/view.w;
-  visible.sort((a,b) => a.prio - b.prio);
-  const placed = [];
-
-  for (const v of visible){
-    const {nd,sx,sy,rr} = v;
-    const {isle,lbl} = nd;
-    const forced = v.prio <= 2;
-    const tier = isle.major ? 0 : isle.type==='filler' ? 2 : 1;
-    if (!forced){
-      if (tier===1 && z <= 1.9) continue;
-      if (tier===2 && z <= 2.6) continue;         // filler names surface last
-    }
-
-    const shielded = isShielded(isle.id);
-    lbl.textContent = shielded ? '???' : isle.n;
-    const fs = isle.major ? 12 : isle.type==='filler' ? 10 : 11;
-    const wpx = shielded ? fs*2.2 : nd.w100 * fs/100;
-    const hpx = fs*1.1, gap = 6;
-
-    let put = null;
-    for (const [bx,by,anchor] of BERTHS){
-      const cx = sx + bx*(rr+gap), cy = sy + by*(rr+gap+hpx*.5);
-      const left = anchor==='start' ? cx : anchor==='end' ? cx-wpx : cx-wpx/2;
-      const box = {x:left-2, y:cy-hpx*.72-1, w:wpx+4, h:hpx+2};
-      const clash = placed.some(p => overlaps(box,p)) || obstacles.some(o => overlaps(box,o));
-      if (!clash || forced){ put={cx,cy,anchor,box}; if (!clash) break; }
-    }
-    if (!put) continue;
-
-    placed.push(put.box);
-    lbl.style.display='';
-    lbl.setAttribute('font-size', fs*k);
-    lbl.setAttribute('text-anchor', put.anchor);
-    lbl.setAttribute('stroke-width', 3.2*k);
-    lbl.setAttribute('x', view.x + put.cx/scale);
-    lbl.setAttribute('y', view.y + put.cy/scale);
-    lbl.classList.toggle('fill', isle.type==='filler' && !shielded);
-    lbl.classList.toggle('sailed', v.isSailed && isle.type!=='filler' && !shielded);
-    lbl.classList.toggle('here', (v.isHere||v.isNext) && !shielded);
-    lbl.classList.toggle('hidden-name', shielded);
-  }
-
-  seaLabelEls.forEach(t => t.style.opacity = z>2.4 ? Math.max(0,.3-(z-2.4)*.12) : .3);
-  updatePose();
-  updateBehind();
-}
-
 /* ============================================================
-   PAN / ZOOM
+   THE GLOBE — orthographic canvas map (replaces the flat SVG chart)
+   The world is a sphere: the Grand Line is the equator, the two Red
+   Line crossings are antipodal, the four Blues sit in the quadrants.
+   Island x/y on the 4000x2400 cylinder map to lon/lat. This renderer
+   reads the same progress state the flat chart did (STOPS, seen,
+   positionIsland, isShielded, ...) and calls select()/updatePose().
    ============================================================ */
-SVG.addEventListener('wheel', e => {
-  e.preventDefault();
-  const r = SVG.getBoundingClientRect();
-  const px=(e.clientX-r.left)/r.width, py=(e.clientY-r.top)/r.height;
-  const wx=view.x+px*view.w, wy=view.y+py*view.h;
-  view.w *= Math.exp(e.deltaY*0.0016);
-  clampView();
-  view.x=wx-px*view.w; view.y=wy-py*view.h;
+const stage = document.getElementById('stage');
+const cvs   = document.getElementById('globe');
+const ctx   = cvs.getContext('2d');
+const DPR   = Math.max(1, window.devicePixelRatio || 1);
+const DEG   = Math.PI/180, PHI_MAX = 82*DEG;
+
+// palette from the CSS custom properties, so the canvas matches the theme
+const _css = getComputedStyle(document.documentElement);
+const COL = {};
+['sea-deep','sea','sea-shallow','calm','grid','land','ink','brass','brass-lite','lacquer','voyage','filler','paper']
+  .forEach(k => { COL[k] = (_css.getPropertyValue('--'+k)||'').trim() || '#888'; });
+
+const lonlat   = (x,y) => ({ lon:(x/W)*2*Math.PI, lat:(1-2*y/H)*PHI_MAX });
+const clampPhi = p => Math.max(-Math.PI/2+0.03, Math.min(Math.PI/2-0.03, p));
+
+let lam0 = 90*DEG, phi0 = 14*DEG, zoom = 1;
+let baseR = 300, R = 300, VW = 800, VH = 600, cx = 400, cy = 300, camAnim = 0;
+let mapReady = false;  // set true once boot has run; guards updatePose's later-declared DOM refs
+
+function project(lon,lat){
+  const dl = lon - lam0;
+  const cosc = Math.sin(phi0)*Math.sin(lat) + Math.cos(phi0)*Math.cos(lat)*Math.cos(dl);
+  return { x: cx + R*Math.cos(lat)*Math.sin(dl),
+           y: cy - R*(Math.cos(phi0)*Math.sin(lat) - Math.sin(phi0)*Math.cos(lat)*Math.cos(dl)),
+           vis: cosc > 0 };
+}
+function gresize(){
+  VW = cvs.clientWidth || stage.clientWidth || 800;
+  VH = cvs.clientHeight || stage.clientHeight || 600;
+  cvs.width = Math.round(VW*DPR); cvs.height = Math.round(VH*DPR);
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  cx = VW/2; cy = VH/2; baseR = Math.min(VW,VH)*0.46; R = baseR*zoom;
   draw();
-}, {passive:false});
-
-/* double-click, or double-tap, zooms in on the spot you hit */
-function zoomAt(clientX, clientY, f){
-  const r = SVG.getBoundingClientRect();
-  const px = (clientX - r.left)/r.width, py = (clientY - r.top)/r.height;
-  const wx = view.x + px*view.w, wy = view.y + py*view.h;
-  const from = view.w;
-  const target = Math.max(MIN_W, Math.min(MAX_W, view.w * f));
-  if (matchMedia('(prefers-reduced-motion: reduce)').matches){
-    view.w = target; clampView();
-    view.x = wx - px*view.w; view.y = wy - py*view.h;
-    draw(); return;
-  }
-  const t0 = performance.now(), dur = 320;
-  (function step(t){
-    const p = Math.min(1,(t-t0)/dur), e = 1-Math.pow(1-p,3);
-    view.w = from + (target - from)*e;
-    clampView();
-    view.x = wx - px*view.w;
-    view.y = wy - py*view.h;
-    draw();
-    if (p<1) requestAnimationFrame(step);
-  })(performance.now());
 }
-const onWater = t => !(t.closest && t.closest('.island'));
-SVG.addEventListener('dblclick', e => {
-  if (!onWater(e.target)) return;
-  e.preventDefault();
-  zoomAt(e.clientX, e.clientY, e.shiftKey ? 2 : 0.5);
-});
+function setZoom(z){ zoom = Math.max(0.85, Math.min(7, z)); R = baseR*zoom; draw(); }
 
-const ptrs = new Map(); let pinch = null;
-let lastTap = 0, lastTapXY = [0,0];
-/* Capture the pointer only ONCE a real drag begins (past a few px). Capturing
-   on pointerdown would swallow the click event on an island, so a single tap
-   would never open its details — which is exactly what was happening. */
-let downXY = null, dragging = false;
-const capture = id => { try { SVG.setPointerCapture(id); } catch { /* pointer already gone */ } };
-SVG.addEventListener('pointerup', e => {
-  if (e.pointerType === 'mouse') return;          // the mouse goes through dblclick
-  if (!onWater(e.target)) return;
-  const now = performance.now();
-  const moved = Math.hypot(e.clientX - lastTapXY[0], e.clientY - lastTapXY[1]);
-  if (now - lastTap < 320 && moved < 30){ zoomAt(e.clientX, e.clientY, 0.5); lastTap = 0; }
-  else { lastTap = now; lastTapXY = [e.clientX, e.clientY]; }
-});
-SVG.addEventListener('pointerdown', e => {
-  ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
-  if (ptrs.size===1){ downXY = {x:e.clientX, y:e.clientY}; dragging = false; }
-  if (ptrs.size===2){                              // two fingers: a pinch, capture right away
-    capture(e.pointerId);
-    SVG.classList.add('dragging');
-    const [a,b]=[...ptrs.values()]; pinch={d:Math.hypot(a.x-b.x,a.y-b.y),w:view.w};
-  }
-});
-SVG.addEventListener('pointermove', e => {
-  if (!ptrs.has(e.pointerId)) return;
-  const prev = ptrs.get(e.pointerId), r = SVG.getBoundingClientRect();
-  if (ptrs.size===2 && pinch){
-    ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
-    const [a,b]=[...ptrs.values()], d=Math.hypot(a.x-b.x,a.y-b.y);
-    if (d>0){
-      const px=((a.x+b.x)/2-r.left)/r.width, py=((a.y+b.y)/2-r.top)/r.height;
-      const wx=view.x+px*view.w, wy=view.y+py*view.h;
-      view.w = pinch.w*(pinch.d/d); clampView();
-      view.x=wx-px*view.w; view.y=wy-py*view.h;
-      draw();
-    }
-    return;
-  }
-  if (!dragging){                                  // start panning only after moving a little
-    if (!downXY || Math.hypot(e.clientX-downXY.x, e.clientY-downXY.y) < 5) return;
-    dragging = true;
-    capture(e.pointerId);
-    SVG.classList.add('dragging');
-  }
-  view.x -= (e.clientX-prev.x)/r.width*view.w;
-  view.y -= (e.clientY-prev.y)/r.height*view.h;
-  ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
-  draw();
-});
-['pointerup','pointercancel','pointerleave'].forEach(ev => SVG.addEventListener(ev, e => {
-  ptrs.delete(e.pointerId);
-  if (ptrs.size<2) pinch=null;
-  if (ptrs.size===0){ SVG.classList.remove('dragging'); dragging = false; downXY = null; }
-}));
-SVG.addEventListener('keydown', e => {
-  const s = view.w*.08;
-  const m = {ArrowLeft:[-s,0],ArrowRight:[s,0],ArrowUp:[0,-s],ArrowDown:[0,s]};
-  if (m[e.key]){ e.preventDefault(); view.x+=m[e.key][0]; view.y+=m[e.key][1]; draw(); }
-  if (e.key==='+'||e.key==='='){ e.preventDefault(); zoomBy(.72); }
-  if (e.key==='-'||e.key==='_'){ e.preventDefault(); zoomBy(1/.72); }
-  if (e.key==='Escape') deselect();
-});
-function zoomBy(f){
-  const cx=view.x+view.w/2, cy=view.y+view.h/2;
-  view.w*=f; clampView();
-  view.x=cx-view.w/2; view.y=cy-view.h/2; draw();
-}
-document.getElementById('zin').onclick  = () => zoomBy(.7);
-document.getElementById('zout').onclick = () => zoomBy(1/.7);
-document.getElementById('zfit').onclick = fit;
-document.getElementById('zhere').onclick = () => select(positionIsland(), true);
+// --- geometry helpers (bands are filled regions, so they foreshorten) ---
+function poly(pts){ ctx.beginPath(); let s=false;
+  for (const [lon,lat] of pts){ const p=project(lon,lat);
+    if(!p.vis){s=false;continue;} if(!s){ctx.moveTo(p.x,p.y);s=true;} else ctx.lineTo(p.x,p.y); }
+  ctx.stroke(); }
+const parallel = lat => { const p=[]; for(let i=0;i<=160;i++) p.push([2*Math.PI*i/160, lat]); return p; };
+const meridian = lon => { const p=[]; for(let i=0;i<=100;i++) p.push([lon, -Math.PI/2+Math.PI*i/100]); return p; };
+function fillStrips(edgeFn,N,color){ ctx.fillStyle=color; let run=[];
+  const flush=()=>{ if(run.length>1){ ctx.beginPath(); ctx.moveTo(run[0].t.x,run[0].t.y);
+    for(let i=1;i<run.length;i++) ctx.lineTo(run[i].t.x,run[i].t.y);
+    for(let i=run.length-1;i>=0;i--) ctx.lineTo(run[i].b.x,run[i].b.y); ctx.closePath(); ctx.fill(); } run=[]; };
+  for(let i=0;i<=N;i++){ const {t,b}=edgeFn(i/N); if(t.vis&&b.vis) run.push({t,b}); else flush(); } flush(); }
+function latBand(latC,hDeg,color){ const a=(latC+hDeg)*DEG,b=(latC-hDeg)*DEG;
+  fillStrips(u=>{ const lon=2*Math.PI*u; return {t:project(lon,a), b:project(lon,b)}; },240,color); }
+function redWall(dDeg,color){ const d=dDeg*DEG,sd=Math.sin(d),cd=Math.cos(d),cl=v=>Math.max(-1,Math.min(1,v));
+  const P3=(X,Y,Z)=>project(Math.atan2(Y,X),Math.asin(cl(Z)));
+  fillStrips(u=>{ const s=2*Math.PI*u,cs=Math.cos(s)*cd,ss=Math.sin(s)*cd; return {t:P3(sd,cs,ss), b:P3(-sd,cs,ss)}; },240,color); }
+function overlap(a,b){ return a.x<b.x+b.w && a.x+a.w>b.x && a.y<b.y+b.h && a.y+a.h>b.y; }
+const projIsle = is => { const {lon,lat}=lonlat(is.x,is.y); return project(lon,lat); };
 
-function flyTo(isle, targetW = 900){
-  const from = {...view}, r = SVG.getBoundingClientRect();
-  const tw = Math.max(MIN_W, Math.min(view.w, targetW));
-  /* fly to whichever wrapped copy of the island is nearest the current view,
-     so crossing the seam takes the short way; clampView wraps the result. */
-  let ix = isle.x, cx = view.x + view.w/2;
-  while (ix - cx > W/2) ix -= W;
-  while (cx - ix > W/2) ix += W;
-  const to = {x: ix - tw/2, y: isle.y - (tw*r.height/r.width)/2, w: tw};
-  if (matchMedia('(prefers-reduced-motion: reduce)').matches){ view.x=to.x; view.y=to.y; view.w=to.w; draw(); return; }
-  const t0 = performance.now(), dur = 700;
-  (function step(t){
-    const p = Math.min(1,(t-t0)/dur), e = 1-Math.pow(1-p,3);
-    view.x = from.x+(to.x-from.x)*e;
-    view.y = from.y+(to.y-from.y)*e;
-    view.w = from.w+(to.w-from.w)*e;
-    draw();
-    if (p<1) requestAnimationFrame(step);
-  })(performance.now());
+// interpolate a leg along the sphere, appending projected points (visible flag kept)
+function legPoints(a,b,out){
+  const A=lonlat(a.x,a.y), B=lonlat(b.x,b.y);
+  let dl=B.lon-A.lon; while(dl>Math.PI)dl-=2*Math.PI; while(dl<-Math.PI)dl+=2*Math.PI;
+  const steps=Math.max(8,Math.ceil(Math.abs(dl)/(4*DEG)));
+  for(let s=1;s<=steps;s++){ const t=s/steps; out.push(project(A.lon+dl*t, A.lat+(B.lat-A.lat)*t)); }
 }
+function strokeRun(pts,w,color){ ctx.strokeStyle=color; ctx.lineWidth=w; ctx.lineCap='round'; ctx.lineJoin='round';
+  ctx.beginPath(); let st=false; for(const p of pts){ if(!p.vis){st=false;continue;} if(!st){ctx.moveTo(p.x,p.y);st=true;} else ctx.lineTo(p.x,p.y); } ctx.stroke(); }
+
+// the sailed wake, from real progress: red where reached, faint where not
+function drawTrack(){
+  if(STOPS.length<2) return;
+  const sailed=[], ahead=[];
+  for(let i=0;i<STOPS.length-1;i++){
+    const a=byId[STOPS[i].island], b=byId[STOPS[i+1].island]; if(!a||!b) continue;
+    const pts=[projIsle(a)]; legPoints(a,b,pts);
+    (stopReached(STOPS[i+1]) ? sailed : ahead).push(pts);
+  }
+  ctx.setLineDash([6,7]);
+  for(const pts of ahead) strokeRun(pts, Math.max(1.6,R*0.005), 'rgba(233,220,192,0.26)');
+  ctx.setLineDash([]);
+  for(const pts of sailed) strokeRun(pts, Math.max(6,R*0.02), 'rgba(224,80,63,0.20)');
+  for(const pts of sailed) strokeRun(pts, Math.max(2.4,R*0.009), COL.voyage);
+}
+// yellow branch-lines out to the anime-only detour islands
+function drawDetours(){
+  if(!fillerShown()) return;
+  for(const f of FILLER_ISLANDS){
+    const a=byId[f.from], b=byId[f.to]; if(!a||!b) continue;
+    const arc=ARCS.find(x=>x.id===f.arcId), done = arc && seenIn(arc,medium())>0;
+    const pts=[projIsle(a)]; legPoints(a,f,pts); legPoints(f,b,pts);
+    ctx.setLineDash([2,5]);
+    strokeRun(pts, Math.max(1.6,R*0.006), done?'rgba(227,179,65,0.8)':'rgba(227,179,65,0.4)');
+    ctx.setLineDash([]);
+  }
+}
+function hit(mx,my){ let best=null,bd=16;
+  for(const is of ISLANDS){ if(is.type==='filler' && !fillerShown()) continue;
+    const p=projIsle(is); if(!p.vis) continue;
+    const d=Math.hypot(p.x-mx,p.y-my); if(d<bd){ bd=d; best=is; } }
+  return best; }
+
+function draw(){
+  if(!STOPS || !STOPS.length){ ctx.clearRect(0,0,VW,VH); return; }
+  ctx.clearRect(0,0,VW,VH);
+  const g=ctx.createRadialGradient(cx-R*0.4,cy-R*0.45,R*0.15,cx,cy,R*1.08);
+  g.addColorStop(0,COL['sea-shallow']); g.addColorStop(.55,COL.sea); g.addColorStop(1,COL['sea-deep']);
+  ctx.beginPath(); ctx.arc(cx,cy,R,0,7); ctx.fillStyle=g; ctx.fill();
+  ctx.save(); ctx.beginPath(); ctx.arc(cx,cy,R,0,7); ctx.clip(); ctx.lineJoin='round';
+  ctx.lineCap='round'; ctx.strokeStyle='rgba(95,166,188,0.10)'; ctx.lineWidth=1;
+  for(let la=-60;la<=60;la+=30) poly(parallel(la*DEG));
+  for(let lo=0;lo<360;lo+=30) poly(meridian(lo*DEG));
+  ctx.lineCap='butt';
+  latBand(0,10,'rgba(6,27,38,0.82)');
+  latBand(0,6.4,'rgba(118,180,199,0.42)');
+  redWall(3.4, COL.lacquer);
+  // Skypiea floats above Jaya
+  const sky=byId['skypiea'], jaya=byId['jaya'];
+  if(sky&&jaya){ const ps=projIsle(sky), pj=projIsle(jaya);
+    if(ps.vis&&pj.vis){ ctx.setLineDash([2,4]); ctx.strokeStyle='rgba(220,238,244,0.5)'; ctx.lineWidth=1.2;
+      ctx.beginPath(); ctx.moveTo(pj.x,pj.y); ctx.lineTo(ps.x,ps.y); ctx.stroke(); ctx.setLineDash([]); } }
+  drawDetours();
+  drawTrack();
+
+  const reached=reachedIslands(), here=positionIsland(), nxt=nextStop(), nextId=nxt?nxt.island:null;
+  const vis=[];
+  for(const is of ISLANDS){ if(is.type==='filler' && !fillerShown()) continue;
+    const p=projIsle(is); if(!p.vis) continue;
+    const st = is.type==='filler' ? 'filler'
+             : is.id===here ? 'here'
+             : reached.has(is.id) ? 'sailed'
+             : is.id===nextId ? 'next' : 'unreached';
+    vis.push({is,x:p.x,y:p.y,st, pri: is.id===selected?0 : is.major?1:2, d:Math.hypot(p.x-cx,p.y-cy)});
+  }
+  const fillFor = st => st==='filler'?COL.filler : st==='here'?COL.brass : st==='sailed'?COL.voyage
+                      : st==='next'?COL['brass-lite'] : COL.land;
+  for(const v of vis){ const is=v.is, r=is.major?5:3.4, isLM=is.type==='landmark';
+    ctx.beginPath(); ctx.arc(v.x, v.y+1.5, r+2, 0, 7); ctx.fillStyle='rgba(2,10,15,0.35)'; ctx.fill();
+    if(is.id===selected){ ctx.beginPath(); ctx.arc(v.x,v.y,r+5,0,7); ctx.strokeStyle=COL['brass-lite']; ctx.lineWidth=2; ctx.stroke(); }
+    else if(is.id===hovered){ ctx.beginPath(); ctx.arc(v.x,v.y,r+4,0,7); ctx.strokeStyle='rgba(242,210,142,0.55)'; ctx.lineWidth=1.4; ctx.stroke(); }
+    ctx.fillStyle=fillFor(v.st);
+    if(isLM){ ctx.save(); ctx.translate(v.x,v.y); ctx.rotate(Math.PI/4); ctx.fillRect(-r,-r,2*r,2*r);
+              ctx.lineWidth=1; ctx.strokeStyle='rgba(11,26,34,0.85)'; ctx.strokeRect(-r,-r,2*r,2*r); ctx.restore(); }
+    else { ctx.beginPath(); ctx.arc(v.x,v.y,r,0,7); ctx.fill(); ctx.lineWidth=1; ctx.strokeStyle='rgba(11,26,34,0.85)'; ctx.stroke(); }
+    if(v.st!=='unreached' && v.st!=='next'){ const pr=islandProgress(is.id);
+      if(pr && pr.total && pr.frac>0 && pr.frac<1){ ctx.beginPath(); ctx.arc(v.x,v.y,r+3,-Math.PI/2,-Math.PI/2+pr.frac*2*Math.PI);
+        ctx.strokeStyle=COL.voyage; ctx.lineWidth=2; ctx.stroke(); } }
+    if(is.type==='sky'){ ctx.strokeStyle='rgba(220,238,244,0.75)'; ctx.lineWidth=1.6;
+      ctx.beginPath(); ctx.moveTo(v.x+r+2,v.y-2); ctx.lineTo(v.x+r+5,v.y-6); ctx.lineTo(v.x+r+8,v.y-2); ctx.stroke(); }
+  }
+
+  vis.sort((a,b)=>a.pri-b.pri || a.d-b.d);
+  ctx.font='11px system-ui,sans-serif'; const placed=[];
+  for(const v of vis){ const is=v.is, showMinor = zoom>2.2 && v.d<R*0.62;
+    if(!(is.id===selected || is.major || showMinor)) continue;
+    const shield=isShielded(is.id), name = shield ? '???' : is.n;
+    const w=ctx.measureText(name).width, h=12, r=is.major?5:3.4;
+    const cands=[[v.x+r+4,v.y],[v.x-r-4-w,v.y],[v.x-w/2,v.y-r-8],[v.x-w/2,v.y+r+10]];
+    let bx=null,by=null;
+    for(const [lx,ly] of cands){ const box={x:lx-2,y:ly-h/2,w:w+4,h:h+2};
+      if(!placed.some(q=>overlap(box,q))){ bx=lx; by=ly; placed.push(box); break; } }
+    if(bx===null) continue;
+    ctx.textAlign='left'; ctx.textBaseline='middle';
+    ctx.fillStyle = is.id===selected ? COL['brass-lite'] : shield ? 'rgba(233,220,192,0.5)' : 'rgba(239,230,210,0.92)';
+    ctx.fillText(name, bx, by);
+  }
+
+  drawRegionLabels();
+  ctx.restore();
+  ctx.beginPath(); ctx.arc(cx,cy,R,0,7); ctx.strokeStyle='rgba(211,160,60,0.32)'; ctx.lineWidth=1.4; ctx.stroke();
+  if(mapReady){ updatePose(); updateBehind(); }
+}
+
+function drawRegionLabels(){
+  const rlabel=(text,lonD,latD,o)=>{ const q=project(lonD*DEG,latD*DEG); if(!q.vis) return;
+    ctx.save(); ctx.translate(q.x,q.y); if(o.rot) ctx.rotate(o.rot);
+    ctx.font=o.font; ctx.fillStyle=o.color; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.letterSpacing=o.ls||'0px'; ctx.fillText(text,0,0); ctx.letterSpacing='0px'; ctx.restore(); };
+  const serif='Georgia,"Times New Roman",serif', sans='system-ui,-apple-system,sans-serif';
+  const big=Math.max(20,Math.min(52,R*0.1)), midF=Math.max(11,Math.min(26,R*0.046)), smF=Math.max(9,Math.min(15,R*0.027));
+  rlabel('Paradise',180,0,{font:'italic 600 '+big+'px '+serif,color:'rgba(236,224,198,0.24)',ls:'2px'});
+  rlabel('New World',0,0,{font:'italic 600 '+big+'px '+serif,color:'rgba(236,224,198,0.24)',ls:'2px'});
+  const blueO={font:'600 '+midF+'px '+sans,color:'rgba(150,205,224,0.55)',ls:'4px'};
+  rlabel('NORTH BLUE',45,56,blueO); rlabel('EAST BLUE',140,56,blueO);
+  rlabel('WEST BLUE',45,-56,blueO); rlabel('SOUTH BLUE',128,-56,blueO);
+  const cbO={font:'600 '+smF+'px '+sans,color:'rgba(150,178,188,0.66)',ls:'5px'};
+  [45,135,225,315].forEach(lo=>{ rlabel('CALM BELT',lo,8.3,cbO); rlabel('CALM BELT',lo,-8.3,cbO); });
+  const redO={font:'600 '+smF+'px '+sans,color:'rgba(247,234,214,0.8)',ls:'5px',rot:-Math.PI/2};
+  [90,270].forEach(lo=>{ rlabel('RED LINE',lo,40,redO); rlabel('RED LINE',lo,-40,redO); });
+}
+
+// --- camera ---
+function fit(){ lam0=90*DEG; phi0=14*DEG; setZoom(1); }
+function flyTo(isle){ if(!isle) return; const {lon,lat}=lonlat(isle.x,isle.y); animateTo(lon,lat); }
+function animateTo(lon,lat){ cancelAnimationFrame(camAnim);
+  const l0=lam0,p0=phi0; let dl=lon-l0; while(dl>Math.PI)dl-=2*Math.PI; while(dl<-Math.PI)dl+=2*Math.PI;
+  const dp=clampPhi(lat)-p0, t0=performance.now();
+  const step=t=>{ let k=Math.min(1,(t-t0)/480); k=1-Math.pow(1-k,3); lam0=l0+dl*k; phi0=p0+dp*k; draw(); if(k<1) camAnim=requestAnimationFrame(step); };
+  camAnim=requestAnimationFrame(step); }
+
+// no-op stubs — the SVG builders are gone; the globe reads STOPS/ISLANDS live
+function buildRoute(){}
+function buildMarkers(){}
+function buildDetourLines(){}
+
+// --- interaction ---
+const ptrs=new Map(); let dragging=false,lastX,lastY,moved=0,vl=0,vp=0,pinchD=0;
+const pdist=()=>{ const a=[...ptrs.values()]; return Math.hypot(a[0].x-a[1].x, a[0].y-a[1].y); };
+const localXY=e=>{ const r=cvs.getBoundingClientRect(); return [e.clientX-r.left, e.clientY-r.top]; };
+cvs.addEventListener('pointerdown',e=>{ ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY}); cvs.setPointerCapture(e.pointerId); cancelAnimationFrame(camAnim); cvs.style.cursor='grabbing';
+  if(ptrs.size===1){ dragging=true; lastX=e.clientX; lastY=e.clientY; moved=0; vl=vp=0; } if(ptrs.size===2){ dragging=false; pinchD=pdist(); } });
+cvs.addEventListener('pointermove',e=>{
+  if(ptrs.size===0){ const [mx,my]=localXY(e); const h=hit(mx,my); cvs.style.cursor=h?'pointer':'grab';
+    const hid=h?h.id:null; if(hid!==hovered){ hovered=hid; draw(); } return; }
+  if(!ptrs.has(e.pointerId)) return; ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(ptrs.size===2){ const d=pdist(); if(pinchD>0) setZoom(zoom*d/pinchD); pinchD=d; return; }
+  if(dragging){ const dx=e.clientX-lastX, dy=e.clientY-lastY; lastX=e.clientX; lastY=e.clientY; moved+=Math.abs(dx)+Math.abs(dy);
+    const k=0.005/Math.sqrt(zoom); lam0-=dx*k; phi0=clampPhi(phi0+dy*k); vl=-dx*k; vp=dy*k; draw(); } });
+function endPtr(e){ const click=ptrs.size===1&&moved<6; ptrs.delete(e.pointerId); if(ptrs.size<2) pinchD=0;
+  if(ptrs.size===0){ dragging=false; const [mx,my]=localXY(e); cvs.style.cursor=hit(mx,my)?'pointer':'grab';
+    if(click){ const h=hit(mx,my); if(h) select(h.id,true); else deselect(); } else coast(); } }
+cvs.addEventListener('pointerup',endPtr);
+cvs.addEventListener('pointercancel',e=>{ ptrs.delete(e.pointerId); dragging=false; });
+cvs.addEventListener('wheel',e=>{ e.preventDefault(); setZoom(zoom*(e.deltaY<0?1.12:0.9)); },{passive:false});
+function coast(){ if(dragging) return; if(Math.abs(vl)<0.0003&&Math.abs(vp)<0.0003) return; lam0+=vl; phi0=clampPhi(phi0+vp); vl*=0.94; vp*=0.94; draw(); requestAnimationFrame(coast); }
+
+document.getElementById('zin').onclick   = () => setZoom(zoom*1.35);
+document.getElementById('zout').onclick  = () => setZoom(zoom/1.35);
+document.getElementById('zhere').onclick = () => { const h=byId[positionIsland()]; if(h) flyTo(h); };
+document.getElementById('zfit').onclick  = () => fit();
+
+new ResizeObserver(gresize).observe(stage);
+window.addEventListener('resize', gresize);
+gresize();
 
 /* ============================================================
    LOG POSE
@@ -1778,7 +1454,7 @@ function deselect(){
   draw();
 }
 document.getElementById('pclose').onclick = deselect;
-SVG.addEventListener('click', e => { if (e.target===SVG || e.target.id==='ocean') deselect(); });
+/* deselect on an empty-ocean click is handled in the globe pointer handler */
 
 /* Region filters were removed — every island stays visible. activeSea is kept
    pinned to 'all' so the draw()/label logic that reads it is a no-op. */
@@ -2288,19 +1964,12 @@ function commit(){
   if (joined.length) toast(`${joined.map(c => c.n).join(' and ')} joined your crew`, 'crew');
 }
 
-window.addEventListener('resize', () => { clampView(); draw(); });
+/* the globe installs its own resize handler (ResizeObserver on #stage) */
 (() => {
   restore();
   setupAuth();
   mAnime.setAttribute('aria-pressed', String(state.medium==='anime'));
   mManga.setAttribute('aria-pressed', String(state.medium==='manga'));
   rebuildStops(); buildRoute(); renderAcct(); renderSettings(); renderCrew(); renderQuickLog(); renderAuthMode(); applyVoyageCollapsed();
-  requestAnimationFrame(() => {
-    for (const id in nodes){
-      const {lbl} = nodes[id];
-      lbl.setAttribute('font-size', 100);
-      nodes[id].w100 = lbl.getComputedTextLength();
-    }
-    renderBook(); fit();
-  });
+  requestAnimationFrame(() => { mapReady = true; renderBook(); fit(); });
 })();
