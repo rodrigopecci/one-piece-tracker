@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Grand Line Chart — track your voyage through One Piece</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --sea-deep:#08202D; --sea:#0D3143; --sea-shallow:#15495F; --calm:#092836;
+    --grid:#2C6E82; --land:#E9DCC0; --ink:#0B1A22;
+    --brass:#D3A03C; --brass-lite:#F2D28E;
+    --lacquer:#B03A2E; --voyage:#E0503F; --filler:#E3B341; --paper:#EFE6D2;
+    --display:"IM Fell English", Georgia, serif;
+    --body:"IBM Plex Sans", system-ui, sans-serif;
+    --mono:"IBM Plex Mono", ui-monospace, Menlo, monospace;
+    --card-w:min(320px,74vw);          /* shared by the Log Pose + quick-log cards */
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;margin:0;}
+  body{background:var(--sea-deep);color:var(--paper);font-family:var(--body);overflow:hidden;-webkit-font-smoothing:antialiased;}
+  .app{height:100dvh;display:grid;grid-template-rows:auto 1fr;grid-template-columns:minmax(0,1fr);}
+
+  .bar{display:flex;align-items:center;gap:14px;padding:9px 14px;border-bottom:1px solid rgba(211,160,60,.28);
+    background:linear-gradient(180deg,#0A2836,#08202D);position:relative;z-index:40;flex-wrap:wrap;}
+  .logbtn{display:flex;align-items:center;gap:8px;background:none;border:1px solid rgba(211,160,60,.35);
+    color:var(--paper);border-radius:2px;padding:7px 11px;cursor:pointer;font-family:var(--mono);
+    font-size:10px;letter-spacing:.14em;text-transform:uppercase;white-space:nowrap;position:relative;}
+  .logbtn:hover{border-color:var(--brass);background:rgba(211,160,60,.12);}
+  .logbtn .bars{display:inline-flex;flex-direction:column;gap:2px;}
+  .logbtn .bars i{width:13px;height:1.5px;background:var(--brass);display:block;}
+  .logbtn .dot{position:absolute;top:-4px;right:-4px;min-width:15px;height:15px;border-radius:999px;
+    background:var(--voyage);color:#160604;font-size:9px;line-height:15px;text-align:center;padding:0 3px;display:none;}
+  .logbtn .dot.on{display:block;}
+  .mark h1{font-family:var(--display);font-size:20px;font-weight:400;letter-spacing:.14em;
+    text-transform:uppercase;margin:0;white-space:nowrap;}
+  .medium{display:flex;border:1px solid rgba(211,160,60,.4);border-radius:2px;overflow:hidden;}
+  .medium button{background:none;border:0;color:rgba(239,230,210,.66);cursor:pointer;font-family:var(--mono);
+    font-size:10px;letter-spacing:.16em;text-transform:uppercase;padding:7px 13px;white-space:nowrap;}
+  .medium button + button{border-left:1px solid rgba(211,160,60,.4);}
+  .medium button[aria-pressed="true"]{background:var(--brass);color:#0B1A22;font-weight:500;}
+  .filters{display:flex;gap:5px;flex-wrap:wrap;margin-left:auto;}
+  .chip{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;background:none;
+    border:1px solid rgba(211,160,60,.3);color:rgba(239,230,210,.7);padding:5px 8px;border-radius:999px;cursor:pointer;white-space:nowrap;}
+  .chip[aria-pressed="true"]{background:var(--brass);border-color:var(--brass);color:#0B1A22;font-weight:500;}
+
+  .search{position:relative;flex:0 1 320px;min-width:150px;margin-left:auto;}   /* sits on the right, next to the account */
+  .search > input{width:100%;background:rgba(233,220,192,.06);border:1px solid rgba(211,160,60,.3);color:var(--paper);
+    font-family:var(--body);font-size:13px;padding:7px 12px;border-radius:999px;outline:none;-webkit-appearance:none;}
+  .search > input::placeholder{color:rgba(239,230,210,.42);}
+  .search > input:focus{border-color:var(--brass);background:rgba(233,220,192,.1);}
+  .search-results{position:absolute;top:calc(100% + 6px);right:0;width:min(400px,calc(100vw - 24px));max-height:64vh;
+    overflow-y:auto;background:#0C2B3A;border:1px solid rgba(211,160,60,.4);border-radius:4px;z-index:80;display:none;
+    box-shadow:0 12px 34px rgba(0,0,0,.45);}
+  .search-results.open{display:block;}
+  .sr-sec{font-family:var(--mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--brass);padding:10px 12px 5px;}
+  .sr-item{display:block;width:100%;text-align:left;background:none;border:0;border-top:1px solid rgba(211,160,60,.08);
+    color:var(--paper);cursor:pointer;padding:8px 12px;}
+  .sr-item:hover{background:rgba(211,160,60,.12);}
+  .sr-t{display:block;font-size:13px;line-height:1.3;}
+  .sr-sub{display:block;font-family:var(--mono);font-size:10px;color:rgba(239,230,210,.5);margin-top:2px;}
+  .sr-note{padding:12px;font-size:12px;color:rgba(239,230,210,.5);}
+
+  .acct{position:relative;}
+  .avatar{display:flex;align-items:center;gap:8px;background:none;border:1px solid rgba(211,160,60,.35);
+    border-radius:999px;padding:4px 11px 4px 4px;cursor:pointer;color:var(--paper);}
+  .avatar:hover{border-color:var(--brass);}
+  .avatar .disc{width:26px;height:26px;border-radius:50%;background:var(--brass);color:#0B1A22;display:flex;
+    align-items:center;justify-content:center;font-family:var(--display);font-size:14px;flex:none;}
+  .avatar .who{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap;}
+  .menu{position:absolute;top:calc(100% + 7px);right:0;width:216px;background:#0C2B3A;
+    border:1px solid rgba(211,160,60,.35);border-radius:2px;z-index:60;display:none;overflow:hidden;}
+  .menu.open{display:block;}
+  .menu .head{padding:12px 13px;border-bottom:1px solid rgba(211,160,60,.18);}
+  .menu .head .n{font-family:var(--display);font-size:17px;display:block;}
+  .menu .head .p{font-family:var(--mono);font-size:9.5px;color:var(--brass);letter-spacing:.12em;
+    text-transform:uppercase;margin-top:3px;display:block;}
+  .menu button{display:block;width:100%;text-align:left;background:none;border:0;color:var(--paper);
+    font-family:var(--body);font-size:13px;padding:10px 13px;cursor:pointer;}
+  .menu button:hover{background:rgba(211,160,60,.14);}
+  .menu button.danger{color:#F0A99C;border-top:1px solid rgba(211,160,60,.18);}
+
+  .modal{position:fixed;inset:0;z-index:70;display:none;align-items:center;justify-content:center;padding:20px;}
+  .modal.open{display:flex;}
+  .modal .back{position:absolute;inset:0;background:rgba(4,14,20,.72);}
+  .sheet{position:relative;width:100%;max-width:400px;max-height:86dvh;overflow-y:auto;
+    background:linear-gradient(180deg,#0F3244,#08202D);border:1px solid rgba(211,160,60,.4);border-radius:3px;padding:24px;}
+  .sheet h3{font-family:var(--display);font-weight:400;font-size:25px;margin:0 0 6px;}
+  .sheet .sub{font-size:13px;color:rgba(239,230,210,.6);margin:0 0 20px;line-height:1.55;}
+  .sheet .x{position:absolute;top:12px;right:12px;width:26px;height:26px;background:none;
+    border:1px solid rgba(211,160,60,.35);color:var(--brass-lite);border-radius:2px;cursor:pointer;font-family:var(--mono);}
+  .prov{display:flex;align-items:center;gap:11px;width:100%;background:rgba(233,220,192,.05);
+    border:1px solid rgba(211,160,60,.28);color:var(--paper);border-radius:2px;padding:11px 13px;cursor:pointer;
+    margin-bottom:8px;font-family:var(--body);font-size:13.5px;text-align:left;}
+  .prov:hover{border-color:var(--brass);background:rgba(211,160,60,.12);}
+  .prov .g{width:20px;height:20px;border-radius:3px;display:flex;align-items:center;justify-content:center;
+    font-family:var(--mono);font-size:11px;font-weight:600;flex:none;}
+  .namefield{margin:16px 0 6px;}
+  .namefield label{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--brass);margin-bottom:7px;}
+  .namefield input{width:100%;background:rgba(233,220,192,.06);border:1px solid rgba(211,160,60,.3);
+    color:var(--paper);font-family:var(--body);font-size:14px;padding:9px 11px;border-radius:2px;outline:none;}
+  .namefield input:focus{border-color:var(--brass);}
+  #authForm .sailbtn{margin-top:16px;margin-bottom:0;}
+  .autherr{display:none;font-family:var(--mono);font-size:11px;line-height:1.5;color:#F0A99C;
+    background:rgba(224,80,63,.1);border:1px solid rgba(224,80,63,.32);border-radius:2px;
+    padding:8px 10px;margin:14px 0 0;}
+  .autherr.show{display:block;}
+  .authswap{text-align:center;font-size:12.5px;color:rgba(239,230,210,.6);margin:16px 0 0;}
+  .authswap button{background:none;border:0;color:var(--brass-lite);font-family:var(--body);font-size:12.5px;
+    cursor:pointer;text-decoration:underline;padding:0 0 0 4px;}
+  .mocknote{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;
+    color:rgba(239,230,210,.35);text-align:center;margin-top:14px;}
+  .mocknote:empty{display:none;}
+  .setting{display:flex;align-items:flex-start;gap:13px;padding:14px 0;border-top:1px solid rgba(211,160,60,.16);}
+  .setting:first-of-type{border-top:0;}
+  .setting .txt{flex:1;min-width:0;}
+  .setting .txt b{display:block;font-size:13.5px;font-weight:500;margin-bottom:3px;}
+  .setting .txt span{display:block;font-size:12px;color:rgba(239,230,210,.5);line-height:1.5;}
+  .switch{width:40px;height:22px;border-radius:999px;border:1px solid rgba(211,160,60,.4);
+    background:rgba(233,220,192,.07);cursor:pointer;position:relative;flex:none;padding:0;transition:background .18s;}
+  .switch i{position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;
+    background:rgba(239,230,210,.5);transition:transform .18s, background .18s;display:block;}
+  .switch[aria-checked="true"]{background:var(--brass);border-color:var(--brass);}
+  .switch[aria-checked="true"] i{transform:translateX(18px);background:#0B1A22;}
+  .switch:disabled{opacity:.35;cursor:not-allowed;}
+  .dangerbtn{width:100%;background:none;border:1px solid rgba(224,80,63,.5);color:#F0A99C;font-family:var(--mono);
+    font-size:10px;letter-spacing:.14em;text-transform:uppercase;padding:10px;border-radius:2px;cursor:pointer;margin-top:18px;}
+
+  /* crew roster — a single cumulative portrait of who's aboard */
+  .crew-sheet{max-width:600px;}
+  .crewimg{display:block;width:100%;height:auto;max-height:64dvh;object-fit:contain;
+    border-radius:3px;border:1px solid rgba(211,160,60,.28);background:rgba(8,32,45,.5);}
+  .crewgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .cm{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid rgba(211,160,60,.22);
+    border-radius:2px;background:rgba(233,220,192,.03);}
+  .cm.in{border-color:rgba(224,80,63,.5);background:rgba(224,80,63,.08);}
+  .cm.out{border-style:dashed;opacity:.5;}
+  .cm .disc{width:32px;height:32px;border-radius:50%;flex:none;display:flex;align-items:center;
+    justify-content:center;font-family:var(--display);font-size:15px;border:1px solid var(--brass);color:var(--brass);}
+  .cm.in .disc{background:var(--voyage);border-color:var(--voyage);color:#160604;}
+  .cm .t{min-width:0;}
+  .cm .t b{display:block;font-size:12.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .cm .t span{display:block;font-family:var(--mono);font-size:9px;letter-spacing:.08em;text-transform:uppercase;
+    color:rgba(239,230,210,.5);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .cm.in .t span{color:var(--brass);}
+  .tbtn .n{color:var(--brass);}
+
+  /* pace */
+  .pace{margin-top:11px;border-top:1px solid rgba(211,160,60,.16);padding-top:11px;}
+  .pace .l{font-family:var(--mono);font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--brass);display:block;}
+  .pace .v{font-family:var(--display);font-size:16px;display:block;margin-top:4px;line-height:1.35;}
+  .pace .s{font-family:var(--mono);font-size:10px;color:rgba(239,230,210,.45);display:block;margin-top:4px;line-height:1.5;}
+
+  /* anchorage — who else is here */
+  .anch{border:1px solid rgba(211,160,60,.25);border-radius:2px;padding:13px;margin-bottom:18px;background:rgba(211,160,60,.05);}
+  .anch .hd{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:9px;}
+  .anch .hd b{font-family:var(--display);font-size:19px;font-weight:400;}
+  .anch .hd span{font-family:var(--mono);font-size:9px;letter-spacing:.13em;text-transform:uppercase;color:var(--brass);}
+  .anch .who{display:flex;align-items:center;gap:9px;padding:5px 0;}
+  .anch .who .d{width:24px;height:24px;border-radius:50%;flex:none;border:1px solid rgba(211,160,60,.5);
+    display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:12px;color:var(--brass);}
+  .anch .who .t{flex:1;min-width:0;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .anch .who .e{font-family:var(--mono);font-size:10px;color:rgba(239,230,210,.5);flex:none;}
+  .anch .cta{width:100%;margin-top:10px;background:none;border:1px solid rgba(211,160,60,.45);color:var(--brass-lite);
+    font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;padding:8px;border-radius:2px;cursor:pointer;}
+  .anch .cta:hover{background:rgba(211,160,60,.15);}
+  .anch .locked{font-size:12.5px;color:rgba(239,230,210,.6);line-height:1.55;margin:0 0 10px;}
+  .toast.crew{border-color:var(--brass);background:#20344A;}
+  @media (max-width:760px){ .crewgrid{grid-template-columns:1fr;} }
+
+  .stage{position:relative;overflow:hidden;}
+  svg#chart{width:100%;height:100%;display:block;cursor:grab;touch-action:none;background:var(--sea-deep);}
+  svg#chart.dragging{cursor:grabbing;}
+  .vignette{position:absolute;inset:0;pointer-events:none;z-index:2;
+    background:radial-gradient(ellipse at center, rgba(8,32,45,0) 45%, rgba(5,17,24,.75) 100%);}
+  .island{cursor:pointer;}
+  .island:focus{outline:none;}
+  .island:focus-visible .ring{stroke:var(--brass-lite);stroke-width:3px;}
+  .island.dim{opacity:.13;pointer-events:none;}
+  .island.gone{display:none;}
+  .lbl{font-family:var(--body);font-weight:500;letter-spacing:.13em;text-transform:uppercase;fill:var(--paper);
+    paint-order:stroke;stroke:rgba(8,32,45,.9);pointer-events:none;user-select:none;}
+  .lbl.sailed{fill:#F0A99C;}
+  .lbl.here{fill:var(--brass-lite);}
+  .lbl.fill{fill:var(--filler);}
+  .lbl.hidden-name{fill:#5FA6BC;opacity:.7;}
+  .sealbl{font-family:var(--display);font-style:italic;fill:#5FA6BC;letter-spacing:.34em;pointer-events:none;
+    user-select:none;text-anchor:middle;}
+  .zonelbl{font-family:var(--mono);letter-spacing:.36em;text-transform:uppercase;pointer-events:none;user-select:none;}
+
+  .zoom{position:absolute;right:14px;bottom:14px;display:flex;flex-direction:column;gap:5px;z-index:10;}
+  .zoom button{width:34px;height:34px;background:rgba(10,40,54,.9);border:1px solid rgba(211,160,60,.4);
+    color:var(--brass-lite);font-family:var(--mono);font-size:15px;border-radius:2px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;}
+  .zoom button:hover{background:rgba(211,160,60,.2);}
+
+  .pose{position:absolute;left:14px;bottom:14px;z-index:10;display:flex;align-items:center;gap:13px;
+    background:rgba(8,32,45,.92);border:1px solid rgba(211,160,60,.34);border-radius:2px;
+    padding:10px 15px 10px 10px;backdrop-filter:blur(3px);width:var(--card-w);cursor:pointer;
+    text-align:left;color:var(--paper);font:inherit;transition:border-color .2s, background .2s;}
+  .pose:hover{border-color:var(--brass);background:rgba(14,48,64,.95);}
+  .pose:hover .go{opacity:1;transform:translateX(2px);}
+  .pose .needle{transition:transform .7s cubic-bezier(.2,.9,.25,1);transform-origin:29px 29px;}
+  .pose-txt{min-width:0;flex:1;}
+  .pose-txt .k{font-family:var(--mono);font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--brass);display:block;}
+  .pose-txt .v{font-family:var(--display);font-size:17px;letter-spacing:.04em;display:block;margin-top:3px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .pose-txt .c{font-family:var(--mono);font-size:10px;color:rgba(239,230,210,.55);display:block;margin-top:3px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .pose .go{color:var(--brass);font-size:15px;opacity:.45;transition:opacity .2s, transform .2s;flex:none;}
+
+  /* quick-log — mark the next episode/chapter without opening anything.
+     Shares --card-w with the Log Pose so the two bottom-left cards line up. */
+  .qlog{position:absolute;left:14px;bottom:104px;z-index:10;width:var(--card-w);
+    background:rgba(8,32,45,.92);border:1px solid rgba(211,160,60,.34);border-radius:2px;
+    padding:11px 13px;backdrop-filter:blur(3px);}
+  .qlog.done{opacity:.75;}
+  .qlog-txt{min-width:0;margin-bottom:9px;padding-right:24px;}
+  /* collapse / expand the bottom-left voyage HUD (Next up + Log Pose) */
+  .voyage-collapse{position:absolute;top:8px;right:9px;width:22px;height:22px;padding:0;z-index:2;
+    background:none;border:1px solid rgba(211,160,60,.3);color:var(--brass-lite);border-radius:2px;
+    font-family:var(--mono);font-size:13px;line-height:1;cursor:pointer;}
+  .voyage-collapse:hover{background:rgba(211,160,60,.14);border-color:var(--brass);}
+  .voyage-expand{position:absolute;left:14px;bottom:14px;z-index:10;display:none;align-items:center;gap:7px;
+    background:rgba(8,32,45,.92);border:1px solid rgba(211,160,60,.34);border-radius:2px;padding:8px 12px;
+    color:var(--paper);font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+    cursor:pointer;backdrop-filter:blur(3px);}
+  .voyage-expand .ve-caret{color:var(--brass);font-size:12px;}
+  .voyage-expand:hover{border-color:var(--brass);background:rgba(14,48,64,.95);}
+  body.voyage-collapsed #qlog, body.voyage-collapsed #pose{display:none;}
+  body.voyage-collapsed .voyage-expand{display:flex;}
+  .qlog-k{font-family:var(--mono);font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--brass);display:block;}
+  .qlog-v{font-family:var(--display);font-size:19px;letter-spacing:.03em;display:block;margin-top:2px;line-height:1.15;}
+  .qlog-t{font-family:var(--display);font-size:14.5px;line-height:1.3;color:rgba(239,230,210,.9);display:block;margin-top:3px;}
+  .qlog-t:empty{display:none;}
+  .qlog-c{font-family:var(--mono);font-size:10px;color:rgba(239,230,210,.55);display:block;margin-top:4px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .qlog-mark{width:100%;background:var(--voyage);border:0;color:#160604;font-family:var(--mono);font-size:11px;
+    letter-spacing:.12em;text-transform:uppercase;font-weight:500;padding:9px;border-radius:2px;cursor:pointer;
+    transition:transform .08s, filter .15s;}
+  .qlog-mark:hover:not(:disabled){filter:brightness(1.14);}
+  .qlog-mark:active:not(:disabled){transform:scale(.985);}
+  .qlog-mark:disabled{background:none;border:1px solid rgba(211,160,60,.3);color:rgba(239,230,210,.5);cursor:default;}
+
+  .scrim{position:fixed;inset:0;background:rgba(4,14,20,.6);z-index:45;opacity:0;pointer-events:none;transition:opacity .3s;}
+  .scrim.open{opacity:1;pointer-events:auto;}
+  .book{position:fixed;top:0;left:0;bottom:0;width:392px;max-width:92vw;z-index:46;
+    background:linear-gradient(180deg,#0C2B3A,#08202D);border-right:1px solid rgba(211,160,60,.35);
+    transform:translateX(-100%);transition:transform .34s cubic-bezier(.2,.9,.25,1);display:flex;flex-direction:column;}
+  .book.open{transform:none;}
+  .book-head{padding:16px 18px 12px;border-bottom:1px solid rgba(211,160,60,.22);}
+  .book-head .row{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+  .book-head h2{font-family:var(--display);font-weight:400;font-size:22px;margin:0;letter-spacing:.1em;text-transform:uppercase;}
+  .book-close{width:28px;height:28px;border-radius:2px;background:none;border:1px solid rgba(211,160,60,.4);
+    color:var(--brass-lite);font-family:var(--mono);font-size:13px;cursor:pointer;flex:none;}
+  .book-head .hint{font-size:11.5px;color:rgba(239,230,210,.5);margin:9px 0 0;line-height:1.5;}
+  .book-head .hint b{color:var(--brass);font-weight:500;}
+  .tally{padding:12px 18px;border-bottom:1px solid rgba(211,160,60,.22);}
+  .tally .nums{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:7px;}
+  .tally .big{font-family:var(--display);font-size:20px;}
+  .tally .pct{font-family:var(--mono);font-size:11px;color:var(--brass);}
+  .tally .track{height:4px;background:rgba(233,220,192,.1);border-radius:2px;overflow:hidden;display:flex;}
+  .tally .track i{display:block;height:100%;}
+  .tally .legend{display:flex;gap:14px;margin-top:8px;}
+  .tally .legend span{font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;
+    color:rgba(239,230,210,.5);display:flex;align-items:center;gap:5px;}
+  .tally .legend i{width:8px;height:8px;border-radius:1px;display:block;}
+  .behind{margin-top:11px;width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;
+    background:rgba(224,80,63,.1);border:1px solid rgba(224,80,63,.35);border-radius:2px;padding:8px 10px;
+    color:#F0A99C;font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+    cursor:pointer;text-align:left;}
+  .behind:hover{background:rgba(224,80,63,.2);}
+  .book-scroll{flex:1;overflow-y:auto;padding-bottom:30px;}
+  .saga{font-family:var(--mono);font-size:9.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--brass);
+    padding:16px 18px 7px;border-bottom:1px solid rgba(211,160,60,.14);position:sticky;top:0;background:#0A2634;z-index:2;}
+  .arc{border-bottom:1px solid rgba(211,160,60,.1);}
+  .arc-row{display:flex;align-items:center;gap:10px;padding:10px 18px;}
+  .arc-row:hover{background:rgba(211,160,60,.06);}
+  .arc.filler .arc-row{background:rgba(227,179,65,.05);}
+  .arc.gap .arc-row{box-shadow:inset 3px 0 0 var(--voyage);}
+  .arc.miss .arc-row{box-shadow:inset 3px 0 0 var(--brass);}
+  .arc-name{flex:1;min-width:0;background:none;border:0;color:var(--paper);text-align:left;cursor:pointer;
+    padding:0;font-family:var(--body);font-size:13.5px;}
+  .arc-name .t{display:flex;align-items:center;gap:7px;}
+  .arc-name .caret{color:var(--brass);font-size:9px;transition:transform .18s;display:inline-block;}
+  .arc.open .arc-name .caret{transform:rotate(90deg);}
+  .arc-name small{display:block;font-family:var(--mono);font-size:10px;color:rgba(239,230,210,.45);margin-top:3px;}
+  .arc.done .arc-name{color:#F0A99C;}
+  .tag{font-family:var(--mono);font-size:8.5px;letter-spacing:.12em;text-transform:uppercase;padding:2px 5px;
+    border-radius:2px;flex:none;}
+  .tag.fil{background:rgba(227,179,65,.16);color:var(--filler);border:1px solid rgba(227,179,65,.35);}
+  .tag.soon{background:rgba(95,166,188,.14);color:#9FD4E4;border:1px solid rgba(95,166,188,.3);}
+  .tag.nolan{background:rgba(95,166,188,.1);color:#7FBACB;border:1px solid rgba(95,166,188,.25);}
+  .tag.skip{background:rgba(224,80,63,.16);color:#F0A99C;border:1px solid rgba(224,80,63,.4);}
+  .tag.miss{background:rgba(211,160,60,.16);color:var(--brass-lite);border:1px solid rgba(211,160,60,.42);}
+  .arc-count{font-family:var(--mono);font-size:10px;color:rgba(239,230,210,.45);flex:none;}
+  .tick{width:19px;height:19px;flex:none;border-radius:2px;cursor:pointer;border:1px solid rgba(211,160,60,.45);
+    background:none;display:flex;align-items:center;justify-content:center;color:#0B1A22;font-size:11px;line-height:1;padding:0;}
+  .tick[aria-checked="true"]{background:var(--voyage);border-color:var(--voyage);}
+  .tick[aria-checked="mixed"]{background:linear-gradient(135deg,var(--voyage) 50%,transparent 50%);}
+  .arc.filler .tick[aria-checked="true"]{background:var(--filler);border-color:var(--filler);}
+  .arc.filler .tick[aria-checked="mixed"]{background:linear-gradient(135deg,var(--filler) 50%,transparent 50%);}
+  .units{display:none;padding:2px 18px 12px 30px;}
+  .arc.open .units{display:block;}
+  .unit{display:flex;align-items:center;gap:9px;padding:4px 0;}
+  .unit .u-name{flex:1;min-width:0;background:none;border:0;text-align:left;cursor:pointer;padding:3px 6px;
+    color:rgba(239,230,210,.75);font-family:var(--mono);font-size:11.5px;border-radius:2px;
+    white-space:normal;line-height:1.45;}
+  .unit .u-name .ut{color:rgba(239,230,210,.92);font-family:var(--body);}
+  .unit .u-name:hover{background:rgba(211,160,60,.12);color:var(--paper);}
+  .unit.seen .u-name{color:#F0A99C;}
+  .arc.filler .unit.seen .u-name{color:var(--filler);}
+  .unit .tick{width:15px;height:15px;}
+  .unit.t-filler .tick[aria-checked="true"]{background:var(--filler);border-color:var(--filler);}
+  .unit.t-filler.seen .u-name{color:var(--filler);}
+  .unit.t-mixed .tick[aria-checked="true"]{background:linear-gradient(135deg,var(--voyage) 55%,var(--filler) 55%);border-color:var(--voyage);}
+  .unit.t-anime .tick[aria-checked="true"]{background:#7FBACB;border-color:#7FBACB;}
+  .unit.t-anime.seen .u-name{color:#9FD4E4;}
+  .ubadge{font-family:var(--mono);font-size:8px;letter-spacing:.09em;text-transform:uppercase;
+    padding:2px 5px;border-radius:2px;flex:none;}
+  .ubadge.filler{background:rgba(227,179,65,.14);color:var(--filler);border:1px solid rgba(227,179,65,.3);}
+  .ubadge.mixed{background:rgba(224,80,63,.1);color:#F0A99C;border:1px solid rgba(224,80,63,.28);}
+  .ubadge.anime{background:rgba(95,166,188,.12);color:#9FD4E4;border:1px solid rgba(95,166,188,.28);}
+
+  .panel{position:absolute;top:0;right:0;bottom:0;width:344px;z-index:30;
+    background:linear-gradient(180deg,#0C2B3A,#08202D);border-left:1px solid rgba(211,160,60,.3);
+    transform:translateX(100%);transition:transform .34s cubic-bezier(.2,.9,.25,1);overflow:hidden;}
+  .panel.open{transform:none;}
+  .panel-scroll{height:100%;overflow-y:auto;padding-bottom:28px;}
+  .panel-close{position:absolute;top:12px;right:12px;z-index:2;width:28px;height:28px;border-radius:2px;
+    background:rgba(8,32,45,.8);border:1px solid rgba(211,160,60,.4);color:var(--brass-lite);font-family:var(--mono);font-size:13px;cursor:pointer;}
+  .pad{padding:46px 20px 0;}
+  .eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--brass);margin:0 0 6px;}
+  .eyebrow.fil{color:var(--filler);}
+  .panel h2{font-family:var(--display);font-weight:400;font-size:29px;line-height:1.1;margin:0 0 14px;}
+  .sailbtn{width:100%;background:var(--voyage);border:0;color:#160604;font-family:var(--mono);font-size:11px;
+    letter-spacing:.13em;text-transform:uppercase;font-weight:500;padding:11px;border-radius:2px;cursor:pointer;
+    margin-bottom:16px;transition:transform .08s, filter .15s;}
+  .sailbtn.fil{background:var(--filler);}
+  .sailbtn:hover:not(:disabled){filter:brightness(1.14);}
+  .sailbtn:active:not(:disabled){transform:scale(.985);}
+  .sailbtn:disabled{cursor:default;background:none;border:1px solid rgba(224,80,63,.45);color:#F0A99C;}
+  .sailbtn.done{border-color:rgba(224,80,63,.6);background:rgba(224,80,63,.12);color:#F0A99C;}
+  .sailbtn.done.fil{border-color:rgba(227,179,65,.6);background:rgba(227,179,65,.12);color:var(--filler);}
+  .sailbtn.na{border-color:rgba(211,160,60,.25);background:none;color:rgba(239,230,210,.45);}
+
+  /* how far through this island are you? */
+  .isleprog{margin-bottom:12px;}
+  .isleprog .hd{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:6px;}
+  .isleprog .hd b{font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--brass);font-weight:400;}
+  .isleprog .hd span{font-family:var(--mono);font-size:11px;color:rgba(239,230,210,.7);}
+  /* This track is .pbar, NOT .bar — class="bar" collided with the header .bar
+     (display:flex; padding:9px 14px), which made the fill a zero-height flex
+     child, so the bar was invisible at every width. That was the whole bug. */
+  .isleprog .pbar{height:9px;background:rgba(233,220,192,.14);border-radius:999px;overflow:hidden;
+    box-shadow:inset 0 0 0 1px rgba(211,160,60,.16);}
+  .isleprog .pbar i{display:block;height:100%;width:0;border-radius:999px;
+    background:linear-gradient(90deg,#E0503F,#F5825F);box-shadow:0 0 10px rgba(224,80,63,.55);}
+  .isleprog.fil .pbar i{background:linear-gradient(90deg,#E3B341,#F2D28E);box-shadow:0 0 10px rgba(227,179,65,.5);}
+  .isleprog.fil .hd b{color:var(--filler);}
+  .meta{display:grid;grid-template-columns:auto 1fr;gap:7px 14px;border-top:1px solid rgba(211,160,60,.2);
+    border-bottom:1px solid rgba(211,160,60,.2);padding:13px 0;margin-bottom:14px;}
+  .meta dt{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:rgba(239,230,210,.5);}
+  .meta dd{margin:0;font-size:13px;}
+  .blurb{font-size:14px;line-height:1.62;color:rgba(239,230,210,.86);margin:0 0 14px;}
+  .lore{font-size:12.5px;line-height:1.66;color:rgba(239,230,210,.6);margin:0 0 18px;padding-top:13px;
+    border-top:1px solid rgba(211,160,60,.16);}
+  .lore::before{content:"Lore";display:block;font-family:var(--mono);font-size:9px;letter-spacing:.22em;
+    text-transform:uppercase;color:var(--brass);opacity:.75;margin-bottom:7px;}
+  /* "Next to watch/read" — the current unit, in the island panel. No outer
+     border/padding; only the episode-info tile inside it is bordered. */
+  .nowread{margin:0 0 16px;}
+  .nowread .nr-hd{font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--brass);margin-bottom:8px;}
+  .nr-unit{display:block;width:100%;text-align:left;background:rgba(233,220,192,.05);cursor:pointer;
+    border:1px solid rgba(211,160,60,.22);border-radius:2px;padding:9px 10px;margin-bottom:10px;color:var(--paper);}
+  .nr-unit:hover{border-color:var(--brass);background:rgba(211,160,60,.1);}
+  .nr-unit .nr-n{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--brass);margin-bottom:3px;}
+  .nr-unit .nr-t{display:block;font-family:var(--display);font-size:16px;line-height:1.25;}
+  .nowread .nr-mark{margin-bottom:0;}
+  /* unit-detail modal (title + full summary) */
+  .umsum{white-space:pre-wrap;font-size:14px;line-height:1.66;color:rgba(239,230,210,.86);margin:2px 0 20px;}
+  .umacts{display:flex;flex-direction:column;gap:9px;}
+  .umacts .sailbtn{margin:0;}
+  .umlink{background:none;border:0;color:var(--brass-lite);font-family:var(--body);font-size:12.5px;
+    cursor:pointer;text-decoration:underline;padding:4px;}
+  .veil{border:1px dashed rgba(95,166,188,.4);background:rgba(95,166,188,.06);border-radius:2px;padding:14px;margin-bottom:18px;}
+  .veil p{margin:0 0 10px;font-size:13px;color:rgba(239,230,210,.7);line-height:1.55;}
+  .veil button{background:none;border:1px solid rgba(211,160,60,.4);color:var(--brass-lite);font-family:var(--mono);
+    font-size:10px;letter-spacing:.12em;text-transform:uppercase;padding:6px 11px;border-radius:2px;cursor:pointer;}
+
+  .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);z-index:80;background:#0F3244;
+    border:1px solid rgba(211,160,60,.45);border-radius:2px;padding:10px 15px;font-family:var(--mono);font-size:11px;
+    color:var(--paper);opacity:0;pointer-events:none;transition:opacity .25s, transform .25s;max-width:80vw;text-align:center;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  @media (max-width:860px){ .mark{display:none;} }
+  @media (max-width:760px){
+    .panel{top:auto;left:0;right:0;bottom:0;width:auto;height:70dvh;border-left:0;border-top:1px solid rgba(211,160,60,.35);
+      transform:translateY(100%);border-radius:8px 8px 0 0;}
+    .panel.open{transform:none;}
+    :root{--card-w:min(320px,66vw);}
+    .pose{padding:8px 11px 8px 8px;gap:9px;}
+    .pose-txt .v{font-size:14px;}
+    /* two tidy rows: [Log Book · Crew · avatar]  /  [Anime|Manga · filters↔] */
+    .bar{gap:8px;padding:8px 10px;}
+    .acct{order:1;margin-left:auto;}
+    .avatar .who{display:none;}
+    .avatar{padding:4px;gap:0;}   /* username hidden → symmetric circle around the disc */
+    .bar::after{content:"";flex-basis:100%;height:0;order:2;}  /* force the row break */
+    .medium{order:3;flex:none;}
+    .search{order:4;flex:1 1 auto;min-width:0;margin-left:0;}   /* fills the rest of row 2, beside the medium toggle */
+    .menu{width:min(230px,calc(100vw - 16px));}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none !important;}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="bar">
+    <button class="logbtn tbtn" id="openBook" aria-expanded="false" aria-controls="book">
+      <span class="bars"><i></i><i></i><i></i></span> Log Book
+      <span class="dot" id="behindDot"></span>
+    </button>
+    <button class="logbtn tbtn" id="openCrew">Crew <span class="n" id="crewCount">1/10</span></button>
+    <div class="medium" role="group" aria-label="What are you tracking?">
+      <button id="mAnime" aria-pressed="true">Anime</button>
+      <button id="mManga" aria-pressed="false">Manga</button>
+    </div>
+    <div class="search" id="search">
+      <input id="searchInput" type="search" autocomplete="off" spellcheck="false"
+        placeholder="Search titles, arcs, summaries…" aria-label="Search episodes, chapters and arcs" />
+      <div class="search-results" id="searchResults" role="listbox"></div>
+    </div>
+    <div class="acct">
+      <button class="avatar" id="acctBtn" aria-haspopup="menu" aria-expanded="false">
+        <span class="disc" id="acctDisc">?</span><span class="who" id="acctWho">Sign in</span>
+      </button>
+      <div class="menu" id="acctMenu" role="menu"></div>
+    </div>
+  </header>
+
+  <div class="stage" id="stage">
+    <svg id="chart" role="application" aria-label="Interactive map of the One Piece world" tabindex="0">
+      <defs>
+        <radialGradient id="deep" cx="50%" cy="50%" r="70%">
+          <stop offset="0%" stop-color="#15495F"/><stop offset="52%" stop-color="#0D3143"/><stop offset="100%" stop-color="#061821"/>
+        </radialGradient>
+        <pattern id="stipple" width="10" height="10" patternUnits="userSpaceOnUse">
+          <circle cx="2" cy="2" r=".8" fill="#2C6E82" opacity=".3"/><circle cx="7" cy="7" r=".8" fill="#2C6E82" opacity=".18"/>
+        </pattern>
+        <pattern id="rock" width="14" height="14" patternUnits="userSpaceOnUse" patternTransform="rotate(35)">
+          <line x1="0" y1="0" x2="0" y2="14" stroke="#7A2419" stroke-width="3" opacity=".5"/>
+        </pattern>
+        <linearGradient id="brassgrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#F2D28E"/><stop offset="100%" stop-color="#8C6520"/>
+        </linearGradient>
+        <!-- island land dome: light from top-left, shaded coast toward bottom-right -->
+        <radialGradient id="isleSheen" cx="37%" cy="30%" r="75%">
+          <stop offset="0%" stop-color="#FFFFFF" stop-opacity=".34"/>
+          <stop offset="42%" stop-color="#FFFFFF" stop-opacity=".05"/>
+          <stop offset="100%" stop-color="#04121A" stop-opacity=".34"/>
+        </radialGradient>
+        <!-- soft shadow pool beneath each island (no filter, so it stays cheap when tiled) -->
+        <radialGradient id="isleShadow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#020A0F" stop-opacity=".5"/>
+          <stop offset="58%" stop-color="#020A0F" stop-opacity=".26"/>
+          <stop offset="100%" stop-color="#020A0F" stop-opacity="0"/>
+        </radialGradient>
+        <!-- Red Line wall: shadowed cliffs at the edges, sunlit crest down the spine -->
+        <linearGradient id="redWall" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#4E130D"/><stop offset="26%" stop-color="#8E332A"/>
+          <stop offset="50%" stop-color="#C25246"/><stop offset="74%" stop-color="#8E332A"/>
+          <stop offset="100%" stop-color="#4E130D"/>
+        </linearGradient>
+        <!-- Grand Line corridor glow -->
+        <linearGradient id="glGlow" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#7FD0E4" stop-opacity="0"/>
+          <stop offset="50%" stop-color="#7FD0E4" stop-opacity=".20"/>
+          <stop offset="100%" stop-color="#7FD0E4" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+      <g id="world">
+        <rect id="ocean" x="-4400" y="-1200" width="12800" height="9600" fill="url(#deep)"/>
+        <g id="swell"></g>
+        <g id="graticule"></g><g id="belts"></g><g id="glband"></g><g id="sealabels"></g>
+        <g id="lines"></g><g id="tethers"></g><g id="detours"></g><g id="route"></g>
+        <g id="markers"></g><g id="labels"></g>
+      </g>
+    </svg>
+    <div class="vignette"></div>
+
+    <button class="pose" id="pose" aria-label="Go to the next island">
+      <svg width="58" height="58" viewBox="0 0 58 58" aria-hidden="true">
+        <circle cx="29" cy="29" r="26" fill="none" stroke="url(#brassgrad)" stroke-width="2.2"/>
+        <circle cx="29" cy="29" r="20.5" fill="rgba(8,32,45,.65)" stroke="#8C6520" stroke-width=".6"/>
+        <circle cx="29" cy="29" r="20.5" fill="none" stroke="#2C6E82" stroke-width=".5" stroke-dasharray="1 4"/>
+        <g class="needle" id="needle">
+          <path d="M29 12 L32.4 29 L29 33.5 L25.6 29 Z" fill="#B03A2E"/>
+          <path d="M29 46 L25.6 29 L29 24.5 L32.4 29 Z" fill="#E9DCC0" opacity=".6"/>
+        </g>
+        <circle cx="29" cy="29" r="2.6" fill="#D3A03C"/>
+      </svg>
+      <span class="pose-txt">
+        <span class="k" id="poseK">Log Pose</span>
+        <span class="v" id="poseName">Dawn Island</span>
+        <span class="c" id="poseSub">—</span>
+      </span>
+      <span class="go" aria-hidden="true">›</span>
+    </button>
+
+    <div class="qlog" id="qlog">
+      <button class="voyage-collapse" id="voyageCollapse" aria-label="Collapse the voyage cards" title="Collapse">⌄</button>
+      <div class="qlog-txt">
+        <span class="qlog-k" id="qlogK">Next up</span>
+        <span class="qlog-v" id="qlogV">Ep. 1</span>
+        <span class="qlog-t" id="qlogT"></span>
+        <span class="qlog-c" id="qlogC">—</span>
+      </div>
+      <button class="qlog-mark" id="qlogMark">✓ Mark watched</button>
+    </div>
+
+    <button class="voyage-expand" id="voyageExpand" aria-label="Show the voyage cards">
+      <span class="ve-caret">⌃</span> Voyage
+    </button>
+
+    <div class="zoom">
+      <button id="zin" aria-label="Zoom in">+</button>
+      <button id="zout" aria-label="Zoom out">−</button>
+      <button id="zhere" aria-label="Go to where I am" title="Go to where I am">◎</button>
+      <button id="zfit" aria-label="Fit whole chart" title="Fit whole chart">⤢</button>
+    </div>
+
+    <aside class="panel" id="panel" aria-label="Island details" aria-hidden="true">
+      <button class="panel-close" id="pclose" aria-label="Close details">✕</button>
+      <div class="panel-scroll">
+        <div class="pad">
+          <p class="eyebrow" id="pEyebrow">—</p>
+          <h2 id="pName">—</h2>
+          <div class="isleprog" id="isleProg" style="display:none">
+            <div class="hd"><b id="ipLabel">Episodes here</b><span id="ipCount">0 / 0</span></div>
+            <div class="pbar"><i id="ipBar"></i></div>
+          </div>
+          <div class="nowread" id="nowRead" style="display:none">
+            <div class="nr-hd" id="nrLabel">Next to watch</div>
+            <button class="nr-unit" id="nrUnit">
+              <span class="nr-n" id="nrN">Ch. —</span>
+              <span class="nr-t" id="nrT">—</span>
+            </button>
+            <button class="sailbtn nr-mark" id="nrMark">Mark watched &amp; go to next</button>
+          </div>
+          <button class="sailbtn" id="sailbtn">Sail here</button>
+          <dl class="meta">
+            <dt>Sea</dt><dd id="pSea">—</dd>
+            <dt>Arc</dt><dd id="pArc">—</dd>
+            <dt id="pRangeK">Episodes</dt><dd id="pRange">—</dd>
+          </dl>
+          <div class="veil" id="veil" style="display:none">
+            <p>You haven't reached this island yet. The chart keeps its secrets until you do.</p>
+            <button id="peek">Show it anyway</button>
+          </div>
+          <div class="anch" id="anch" style="display:none"></div>
+          <p class="blurb" id="pBlurb">—</p>
+          <p class="lore" id="pLore" style="display:none">—</p>
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<aside class="book" id="book" aria-label="Log book" aria-hidden="true">
+  <div class="book-head">
+    <div class="row"><h2>Log Book</h2><button class="book-close" id="closeBook" aria-label="Close log book">✕</button></div>
+    <p class="hint">Tick a box to mark one <span id="unitWord">episode</span>. Click its name to
+      <b>see its details</b>. Tick an arc to take the whole arc.</p>
+  </div>
+  <div class="tally">
+    <div class="nums"><span class="big" id="tallyBig">0 / 0</span><span class="pct" id="tallyPct">0%</span></div>
+    <div class="track"><i id="barCanon" style="background:var(--voyage)"></i><i id="barFil" style="background:var(--filler)"></i></div>
+    <div class="legend">
+      <span><i style="background:var(--voyage)"></i> Canon</span>
+      <span id="legFil"><i style="background:var(--filler)"></i> Filler</span>
+      <span id="legSrc" style="margin-left:auto;color:rgba(239,230,210,.3)"></span>
+    </div>
+    <div class="pace" id="paceBox">
+      <span class="l">Your pace</span>
+      <span class="v" id="paceV">—</span>
+      <span class="s" id="paceS">—</span>
+    </div>
+    <button class="behind" id="behindBtn" style="display:none"><span id="behindTxt"></span><span>›</span></button>
+  </div>
+  <div class="book-scroll" id="bookScroll"></div>
+</aside>
+
+<div class="modal" id="crewModal">
+  <div class="back" data-close></div>
+  <div class="sheet crew-sheet" role="dialog" aria-modal="true" aria-labelledby="crTitle">
+    <button class="x" data-close aria-label="Close">✕</button>
+    <h3 id="crTitle">Your crew</h3>
+    <p class="sub" id="crSub">They sign on as you sail. Finish the arc, gain the shipmate.</p>
+    <img class="crewimg" id="crewImg" alt="Your crew" />
+  </div>
+</div>
+
+<div class="modal" id="unitModal">
+  <div class="back" data-close></div>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="umTitle">
+    <button class="x" data-close aria-label="Close">✕</button>
+    <p class="eyebrow" id="umKind">Chapter</p>
+    <h3 id="umTitle">—</h3>
+    <div class="veil" id="umVeil" style="display:none">
+      <p>This is ahead of where you are — the summary will spoil it.</p>
+      <button id="umReveal">Reveal anyway</button>
+    </div>
+    <p class="umsum" id="umSum">—</p>
+    <div class="umacts">
+      <button class="sailbtn" id="umMark">Mark as read</button>
+      <button class="umlink" id="umThrough">Set my progress to here</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="signinModal">
+  <div class="back" data-close></div>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="siTitle">
+    <button class="x" data-close aria-label="Close">✕</button>
+    <h3 id="siTitle">Sign on to the crew</h3>
+    <p class="sub" id="siSub">Keep your voyage across devices. Your progress is saved on this device either way — signing in just syncs it.</p>
+    <form id="authForm" novalidate>
+      <div class="namefield"><label for="siEmail">Email</label>
+        <input id="siEmail" type="email" autocomplete="email" placeholder="you@example.com" required /></div>
+      <div class="namefield"><label for="siPass">Password</label>
+        <input id="siPass" type="password" autocomplete="current-password" placeholder="At least 6 characters" minlength="6" required /></div>
+      <p class="autherr" id="siErr" role="alert"></p>
+      <button class="sailbtn" id="siSubmit" type="submit">Sign in</button>
+    </form>
+    <p class="authswap">
+      <span id="siSwapText">New to the crew?</span>
+      <button type="button" id="siToggle">Create an account</button>
+    </p>
+    <p class="mocknote" id="siNote"></p>
+  </div>
+</div>
+
+<div class="modal" id="settingsModal">
+  <div class="back" data-close></div>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="stTitle">
+    <button class="x" data-close aria-label="Close">✕</button>
+    <h3 id="stTitle">Settings</h3>
+    <p class="sub">How your voyage behaves, and who gets to see it.</p>
+    <div class="setting">
+      <span class="txt"><b>Public profile</b>
+        <span>Other sailors can see your name and how far you've come. Needed to meet people at your point in the story.</span></span>
+      <button class="switch" id="sPublic" role="switch" aria-checked="false"><i></i></button>
+    </div>
+    <div class="setting">
+      <span class="txt"><b>Find sailors at my island</b>
+        <span>Show me people on the same episode or chapter. Requires a public profile.</span></span>
+      <button class="switch" id="sCrew" role="switch" aria-checked="false" disabled><i></i></button>
+    </div>
+    <div class="setting">
+      <span class="txt"><b>Spoiler shield</b>
+        <span>Islands ahead of you stay unnamed on the chart. You can peek at any single one.</span></span>
+      <button class="switch" id="sSpoiler" role="switch" aria-checked="true"><i></i></button>
+    </div>
+    <div class="setting">
+      <span class="txt"><b>Show filler detours</b>
+        <span>Anime only. The yellow branches hanging off the route — the places the manga never went.</span></span>
+      <button class="switch" id="sShowFiller" role="switch" aria-checked="true"><i></i></button>
+    </div>
+    <div class="setting">
+      <span class="txt"><b>Count filler toward progress</b>
+        <span>Off means the tally and the percentage ignore anime-original episodes.</span></span>
+      <button class="switch" id="sFiller" role="switch" aria-checked="true"><i></i></button>
+    </div>
+    <button class="dangerbtn" id="resetVoyage">Reset my voyage</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Bump ?v= whenever app.js changes, so GitHub Pages' 10-min asset cache can't
+     serve a stale app.js against a fresh index.html (see CLAUDE.md → Deploy). -->
+<script type="module" src="app-flat.js?v=27"></script>
+</body>
+</html>
