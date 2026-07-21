@@ -174,22 +174,6 @@
   .stage{position:relative;overflow:hidden;}
   canvas#globe{width:100%;height:100%;display:block;cursor:grab;touch-action:none;background:var(--sea-deep);}
   canvas#globe.dragging{cursor:grabbing;}
-  .label-layer{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:3;}
-  .globe-label{position:absolute;left:0;top:0;opacity:0;white-space:nowrap;transform:translate(-50%,-50%);
-    transition:opacity .16s;color:rgba(241,232,212,.9);font-size:11px;font-weight:500;
-    text-shadow:0 1px 2px #031016,0 0 5px #031016;letter-spacing:.02em;}
-  .globe-label.visible{opacity:1;}
-  .globe-label.region{font-family:var(--mono);font-size:clamp(10px,1.1vw,16px);font-weight:500;
-    letter-spacing:.28em;color:rgba(162,214,230,.72);}
-  .globe-label.zone{font-family:var(--display);font-style:italic;font-size:clamp(13px,1.45vw,19px);
-    color:rgba(241,232,212,.44);letter-spacing:.12em;}
-  .globe-label.band{font-family:var(--mono);font-size:9px;letter-spacing:.42em;color:rgba(203,223,224,.72);}
-  .globe-label.redline{font-family:var(--mono);font-size:9px;letter-spacing:.38em;color:#fff1d8;}
-  .globe-label.island{padding:2px 5px;border-radius:2px;background:rgba(4,18,24,.46);}
-  .globe-label.island.minor{font-size:10px;color:rgba(241,232,212,.68);}
-  .globe-label.island.sailed{color:#F0A99C;}
-  .globe-label.island.here{color:var(--brass-lite);}
-  .globe-label.island.filler{color:var(--filler);}
   .vignette{position:absolute;inset:0;pointer-events:none;z-index:2;
     background:radial-gradient(ellipse at center, rgba(8,32,45,0) 45%, rgba(5,17,24,.75) 100%);}
   .island{cursor:pointer;}
@@ -462,7 +446,6 @@
 
   <div class="stage" id="stage">
     <canvas id="globe" role="application" aria-label="Interactive globe of the One Piece world" tabindex="0"></canvas>
-    <div class="label-layer" id="labelLayer" aria-hidden="true"></div>
     <div class="vignette"></div>
 
     <button class="pose" id="pose" aria-label="Go to the next island">
@@ -656,14 +639,8 @@
 
 <div class="toast" id="toast"></div>
 
-<script type="importmap">
-  {
-    "imports": {
-      "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
-      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
-    }
-  }
-</script>
-<script type="module" src="app.js?v=30"></script>
+<!-- Bump ?v= whenever app.js changes, so GitHub Pages' 10-min asset cache can't
+     serve a stale app.js against a fresh index.html (see CLAUDE.md → Deploy). -->
+<script type="module" src="app.js?v=29"></script>
 </body>
 </html>

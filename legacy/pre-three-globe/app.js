@@ -8,7 +8,6 @@
    ============================================================ */
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { SUPABASE_URL, SUPABASE_ANON_KEY, supabaseConfigured } from './config.js';
-import { ThreeWorldMap } from './three-world.js?v=2';
 
 const supabase = supabaseConfigured
   ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
@@ -544,79 +543,243 @@ const isShielded = id =>
   && id !== positionIsland() && !(byId[id].type==='filler' && seenIn(ARCS.find(a=>a.id===byId[id].arcId), medium()) > 0);
 
 /* ============================================================
-   THE THREE.JS GLOBE
-   The tracker, account, search, log book and persistence code below is the
-   production application. Only its renderer is swapped for this adapter.
+   THE GLOBE — orthographic canvas map (replaces the flat SVG chart)
+   The world is a sphere: the Grand Line is the equator, the two Red
+   Line crossings are antipodal, the four Blues sit in the quadrants.
+   Island x/y on the 4000x2400 cylinder map to lon/lat. This renderer
+   reads the same progress state the flat chart did (STOPS, seen,
+   positionIsland, isShielded, ...) and calls select()/updatePose().
    ============================================================ */
 const stage = document.getElementById('stage');
-const cvs = document.getElementById('globe');
-const labelLayer = document.getElementById('labelLayer');
-let mapReady = false;
-let mapZoom = 1;
+const cvs   = document.getElementById('globe');
+const ctx   = cvs.getContext('2d');
+const DPR   = Math.max(1, window.devicePixelRatio || 1);
+const DEG   = Math.PI/180, PHI_MAX = 82*DEG;
 
-const threeMap = new ThreeWorldMap({
-  canvas:cvs,
-  container:stage,
-  labelLayer,
-  islands:ISLANDS,
-  onSelect:id => id ? select(id, true) : deselect()
-});
+// palette — mirrors the CSS custom properties, hardcoded so the canvas never
+// depends on getComputedStyle (some browsers resolve custom props late, which
+// left every colour falling back to grey)
+const COL = {
+  'sea-deep':'#08202D', 'sea':'#0D3143', 'sea-shallow':'#15495F', 'calm':'#092836',
+  'grid':'#2C6E82', 'land':'#E9DCC0', 'ink':'#0B1A22', 'brass':'#D3A03C',
+  'brass-lite':'#F2D28E', 'lacquer':'#B03A2E', 'voyage':'#E0503F', 'filler':'#E3B341', 'paper':'#EFE6D2',
+};
 
-function mapViewState(){
-  const reached = reachedIslands();
-  const hereId = positionIsland();
-  const next = nextStop();
-  const nextId = next?.island || null;
-  const statusById = new Map();
-  const shieldedIds = new Set();
-  const progressById = new Map();
-  const fillerDoneIds = new Set();
+const lonlat   = (x,y) => ({ lon:(x/W)*2*Math.PI, lat:(1-2*y/H)*PHI_MAX });
+const clampPhi = p => Math.max(-Math.PI/2+0.03, Math.min(Math.PI/2-0.03, p));
 
-  for (const island of ISLANDS){
-    const status = island.id === hereId ? 'here'
-      : reached.has(island.id) ? 'sailed'
-      : island.id === nextId ? 'next'
-      : 'unreached';
-    statusById.set(island.id, status);
-    if (isShielded(island.id)) shieldedIds.add(island.id);
-    const progress = islandProgress(island.id);
-    if (progress) progressById.set(island.id, progress.frac);
-    if (island.type === 'filler'){
-      const arc = ARCS.find(item => item.id === island.arcId);
-      if (arc && seenIn(arc, medium()) > 0) fillerDoneIds.add(island.id);
-    }
-  }
+let lam0 = 90*DEG, phi0 = 14*DEG, zoom = 1;
+let baseR = 300, R = 300, VW = 800, VH = 600, cx = 400, cy = 300, camAnim = 0;
+let mapReady = false;  // set true once boot has run; guards updatePose's later-declared DOM refs
 
-  const routeStops = [];
-  for (const stop of STOPS){
-    const item = {id:stop.island,reached:stopReached(stop)};
-    if (routeStops.at(-1)?.id === item.id) routeStops[routeStops.length - 1].reached ||= item.reached;
-    else routeStops.push(item);
-  }
-
-  return {
-    medium:medium(),selectedId:selected,hereId,nextId,statusById,shieldedIds,progressById,
-    routeStops,fillerVisible:fillerShown(),fillerDoneIds
-  };
+function project(lon,lat){
+  const dl = lon - lam0;
+  const cosc = Math.sin(phi0)*Math.sin(lat) + Math.cos(phi0)*Math.cos(lat)*Math.cos(dl);
+  return { x: cx + R*Math.cos(lat)*Math.sin(dl),
+           y: cy - R*(Math.cos(phi0)*Math.sin(lat) - Math.sin(phi0)*Math.cos(lat)*Math.cos(dl)),
+           vis: cosc > 0 };
 }
+function gresize(){
+  VW = cvs.clientWidth || stage.clientWidth || 800;
+  VH = cvs.clientHeight || stage.clientHeight || 600;
+  cvs.width = Math.round(VW*DPR); cvs.height = Math.round(VH*DPR);
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  cx = VW/2; cy = VH/2; baseR = Math.min(VW,VH)*0.46; R = baseR*zoom;
+  draw();
+}
+function setZoom(z){ zoom = Math.max(0.85, Math.min(7, z)); R = baseR*zoom; draw(); }
+
+// --- geometry helpers (bands are filled regions, so they foreshorten) ---
+function poly(pts){ ctx.beginPath(); let s=false;
+  for (const [lon,lat] of pts){ const p=project(lon,lat);
+    if(!p.vis){s=false;continue;} if(!s){ctx.moveTo(p.x,p.y);s=true;} else ctx.lineTo(p.x,p.y); }
+  ctx.stroke(); }
+const parallel = lat => { const p=[]; for(let i=0;i<=160;i++) p.push([2*Math.PI*i/160, lat]); return p; };
+const meridian = lon => { const p=[]; for(let i=0;i<=100;i++) p.push([lon, -Math.PI/2+Math.PI*i/100]); return p; };
+function fillStrips(edgeFn,N,color){ ctx.fillStyle=color; let run=[];
+  const flush=()=>{ if(run.length>1){ ctx.beginPath(); ctx.moveTo(run[0].t.x,run[0].t.y);
+    for(let i=1;i<run.length;i++) ctx.lineTo(run[i].t.x,run[i].t.y);
+    for(let i=run.length-1;i>=0;i--) ctx.lineTo(run[i].b.x,run[i].b.y); ctx.closePath(); ctx.fill(); } run=[]; };
+  for(let i=0;i<=N;i++){ const {t,b}=edgeFn(i/N); if(t.vis&&b.vis) run.push({t,b}); else flush(); } flush(); }
+function latBand(latC,hDeg,color){ const a=(latC+hDeg)*DEG,b=(latC-hDeg)*DEG;
+  fillStrips(u=>{ const lon=2*Math.PI*u; return {t:project(lon,a), b:project(lon,b)}; },240,color); }
+function redWall(dDeg,color){ const d=dDeg*DEG,sd=Math.sin(d),cd=Math.cos(d),cl=v=>Math.max(-1,Math.min(1,v));
+  const P3=(X,Y,Z)=>project(Math.atan2(Y,X),Math.asin(cl(Z)));
+  fillStrips(u=>{ const s=2*Math.PI*u,cs=Math.cos(s)*cd,ss=Math.sin(s)*cd; return {t:P3(sd,cs,ss), b:P3(-sd,cs,ss)}; },240,color); }
+function overlap(a,b){ return a.x<b.x+b.w && a.x+a.w>b.x && a.y<b.y+b.h && a.y+a.h>b.y; }
+const projIsle = is => { const {lon,lat}=lonlat(is.x,is.y); return project(lon,lat); };
+
+// interpolate a leg along the sphere, appending projected points (visible flag kept)
+function legPoints(a,b,out){
+  const A=lonlat(a.x,a.y), B=lonlat(b.x,b.y);
+  let dl=B.lon-A.lon; while(dl>Math.PI)dl-=2*Math.PI; while(dl<-Math.PI)dl+=2*Math.PI;
+  const steps=Math.max(8,Math.ceil(Math.abs(dl)/(4*DEG)));
+  for(let s=1;s<=steps;s++){ const t=s/steps; out.push(project(A.lon+dl*t, A.lat+(B.lat-A.lat)*t)); }
+}
+function strokeRun(pts,w,color){ ctx.strokeStyle=color; ctx.lineWidth=w; ctx.lineCap='round'; ctx.lineJoin='round';
+  ctx.beginPath(); let st=false; for(const p of pts){ if(!p.vis){st=false;continue;} if(!st){ctx.moveTo(p.x,p.y);st=true;} else ctx.lineTo(p.x,p.y); } ctx.stroke(); }
+
+// the sailed wake, from real progress: red where reached, faint where not
+function drawTrack(){
+  if(STOPS.length<2) return;
+  const sailed=[], ahead=[];
+  for(let i=0;i<STOPS.length-1;i++){
+    const a=byId[STOPS[i].island], b=byId[STOPS[i+1].island]; if(!a||!b) continue;
+    const pts=[projIsle(a)]; legPoints(a,b,pts);
+    (stopReached(STOPS[i+1]) ? sailed : ahead).push(pts);
+  }
+  ctx.setLineDash([6,7]);
+  for(const pts of ahead) strokeRun(pts, Math.max(1.6,R*0.005), 'rgba(233,220,192,0.26)');
+  ctx.setLineDash([]);
+  for(const pts of sailed) strokeRun(pts, Math.max(6,R*0.02), 'rgba(224,80,63,0.20)');
+  for(const pts of sailed) strokeRun(pts, Math.max(2.4,R*0.009), COL.voyage);
+}
+// yellow branch-lines out to the anime-only detour islands
+function drawDetours(){
+  if(!fillerShown()) return;
+  for(const f of FILLER_ISLANDS){
+    const a=byId[f.from], b=byId[f.to]; if(!a||!b) continue;
+    const arc=ARCS.find(x=>x.id===f.arcId), done = arc && seenIn(arc,medium())>0;
+    const pts=[projIsle(a)]; legPoints(a,f,pts); legPoints(f,b,pts);
+    ctx.setLineDash([2,5]);
+    strokeRun(pts, Math.max(1.6,R*0.006), done?'rgba(227,179,65,0.8)':'rgba(227,179,65,0.4)');
+    ctx.setLineDash([]);
+  }
+}
+function hit(mx,my){ let best=null,bd=16;
+  for(const is of ISLANDS){ if(is.type==='filler' && !fillerShown()) continue;
+    const p=projIsle(is); if(!p.vis) continue;
+    const d=Math.hypot(p.x-mx,p.y-my); if(d<bd){ bd=d; best=is; } }
+  return best; }
 
 function draw(){
-  threeMap.update(mapViewState());
-  if (mapReady){ updatePose(); updateBehind(); }
+  if(!STOPS || !STOPS.length){ ctx.clearRect(0,0,VW,VH); return; }
+  ctx.clearRect(0,0,VW,VH);
+  const g=ctx.createRadialGradient(cx-R*0.4,cy-R*0.45,R*0.15,cx,cy,R*1.08);
+  g.addColorStop(0,COL['sea-shallow']); g.addColorStop(.55,COL.sea); g.addColorStop(1,COL['sea-deep']);
+  ctx.beginPath(); ctx.arc(cx,cy,R,0,7); ctx.fillStyle=g; ctx.fill();
+  ctx.save(); ctx.beginPath(); ctx.arc(cx,cy,R,0,7); ctx.clip(); ctx.lineJoin='round';
+  ctx.lineCap='round'; ctx.strokeStyle='rgba(95,166,188,0.10)'; ctx.lineWidth=1;
+  for(let la=-60;la<=60;la+=30) poly(parallel(la*DEG));
+  for(let lo=0;lo<360;lo+=30) poly(meridian(lo*DEG));
+  ctx.lineCap='butt';
+  latBand(0,10,'rgba(6,27,38,0.82)');
+  latBand(0,6.4,'rgba(118,180,199,0.42)');
+  redWall(3.4, COL.lacquer);
+  // Skypiea floats above Jaya
+  const sky=byId['skypiea'], jaya=byId['jaya'];
+  if(sky&&jaya){ const ps=projIsle(sky), pj=projIsle(jaya);
+    if(ps.vis&&pj.vis){ ctx.setLineDash([2,4]); ctx.strokeStyle='rgba(220,238,244,0.5)'; ctx.lineWidth=1.2;
+      ctx.beginPath(); ctx.moveTo(pj.x,pj.y); ctx.lineTo(ps.x,ps.y); ctx.stroke(); ctx.setLineDash([]); } }
+  drawDetours();
+  drawTrack();
+
+  const reached=reachedIslands(), here=positionIsland(), nxt=nextStop(), nextId=nxt?nxt.island:null;
+  const vis=[];
+  for(const is of ISLANDS){ if(is.type==='filler' && !fillerShown()) continue;
+    const p=projIsle(is); if(!p.vis) continue;
+    const st = is.type==='filler' ? 'filler'
+             : is.id===here ? 'here'
+             : reached.has(is.id) ? 'sailed'
+             : is.id===nextId ? 'next' : 'unreached';
+    vis.push({is,x:p.x,y:p.y,st, pri: is.id===selected?0 : is.major?1:2, d:Math.hypot(p.x-cx,p.y-cy)});
+  }
+  const fillFor = st => st==='filler'?COL.filler : st==='here'?COL.brass : st==='sailed'?COL.voyage
+                      : st==='next'?COL['brass-lite'] : COL.land;
+  for(const v of vis){ const is=v.is, r=is.major?5:3.4, isLM=is.type==='landmark';
+    ctx.beginPath(); ctx.arc(v.x, v.y+1.5, r+2, 0, 7); ctx.fillStyle='rgba(2,10,15,0.35)'; ctx.fill();
+    if(is.id===selected){ ctx.beginPath(); ctx.arc(v.x,v.y,r+5,0,7); ctx.strokeStyle=COL['brass-lite']; ctx.lineWidth=2; ctx.stroke(); }
+    else if(is.id===hovered){ ctx.beginPath(); ctx.arc(v.x,v.y,r+4,0,7); ctx.strokeStyle='rgba(242,210,142,0.55)'; ctx.lineWidth=1.4; ctx.stroke(); }
+    ctx.fillStyle=fillFor(v.st);
+    if(isLM){ ctx.save(); ctx.translate(v.x,v.y); ctx.rotate(Math.PI/4); ctx.fillRect(-r,-r,2*r,2*r);
+              ctx.lineWidth=1; ctx.strokeStyle='rgba(11,26,34,0.85)'; ctx.strokeRect(-r,-r,2*r,2*r); ctx.restore(); }
+    else { ctx.beginPath(); ctx.arc(v.x,v.y,r,0,7); ctx.fill(); ctx.lineWidth=1; ctx.strokeStyle='rgba(11,26,34,0.85)'; ctx.stroke(); }
+    if(v.st!=='unreached' && v.st!=='next'){ const pr=islandProgress(is.id);
+      if(pr && pr.total && pr.frac>0 && pr.frac<1){ ctx.beginPath(); ctx.arc(v.x,v.y,r+3,-Math.PI/2,-Math.PI/2+pr.frac*2*Math.PI);
+        ctx.strokeStyle=COL.voyage; ctx.lineWidth=2; ctx.stroke(); } }
+    if(is.type==='sky'){ ctx.strokeStyle='rgba(220,238,244,0.75)'; ctx.lineWidth=1.6;
+      ctx.beginPath(); ctx.moveTo(v.x+r+2,v.y-2); ctx.lineTo(v.x+r+5,v.y-6); ctx.lineTo(v.x+r+8,v.y-2); ctx.stroke(); }
+  }
+
+  vis.sort((a,b)=>a.pri-b.pri || a.d-b.d);
+  ctx.font='11px system-ui,sans-serif'; const placed=[];
+  for(const v of vis){ const is=v.is, showMinor = zoom>2.2 && v.d<R*0.62;
+    if(!(is.id===selected || is.major || showMinor)) continue;
+    const shield=isShielded(is.id), name = shield ? '???' : is.n;
+    const w=ctx.measureText(name).width, h=12, r=is.major?5:3.4;
+    const cands=[[v.x+r+4,v.y],[v.x-r-4-w,v.y],[v.x-w/2,v.y-r-8],[v.x-w/2,v.y+r+10]];
+    let bx=null,by=null;
+    for(const [lx,ly] of cands){ const box={x:lx-2,y:ly-h/2,w:w+4,h:h+2};
+      if(!placed.some(q=>overlap(box,q))){ bx=lx; by=ly; placed.push(box); break; } }
+    if(bx===null) continue;
+    ctx.textAlign='left'; ctx.textBaseline='middle';
+    ctx.fillStyle = is.id===selected ? COL['brass-lite'] : shield ? 'rgba(233,220,192,0.5)' : 'rgba(239,230,210,0.92)';
+    ctx.fillText(name, bx, by);
+  }
+
+  drawRegionLabels();
+  ctx.restore();
+  ctx.beginPath(); ctx.arc(cx,cy,R,0,7); ctx.strokeStyle='rgba(211,160,60,0.32)'; ctx.lineWidth=1.4; ctx.stroke();
+  if(mapReady){ updatePose(); updateBehind(); }
 }
 
-function buildRoute(){ threeMap.routeSignature = ''; }
-function buildMarkers(){}
-function buildDetourLines(){ threeMap.routeSignature = ''; }
-function setZoom(value){ mapZoom = Math.max(0.72, Math.min(5, value)); threeMap.setZoom(mapZoom); }
-function flyTo(isle){ if (isle) threeMap.focusIsland(isle.id); }
-function fit(){ mapZoom = 1; threeMap.reset(); draw(); }
-function gresize(){ threeMap.resize(); }
+function drawRegionLabels(){
+  const rlabel=(text,lonD,latD,o)=>{ const q=project(lonD*DEG,latD*DEG); if(!q.vis) return;
+    ctx.save(); ctx.translate(q.x,q.y); if(o.rot) ctx.rotate(o.rot);
+    ctx.font=o.font; ctx.fillStyle=o.color; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.letterSpacing=o.ls||'0px'; ctx.fillText(text,0,0); ctx.letterSpacing='0px'; ctx.restore(); };
+  const serif='Georgia,"Times New Roman",serif', sans='system-ui,-apple-system,sans-serif';
+  const big=Math.max(20,Math.min(52,R*0.1)), midF=Math.max(11,Math.min(26,R*0.046)), smF=Math.max(9,Math.min(15,R*0.027));
+  rlabel('Paradise',180,0,{font:'italic 600 '+big+'px '+serif,color:'rgba(236,224,198,0.24)',ls:'2px'});
+  rlabel('New World',0,0,{font:'italic 600 '+big+'px '+serif,color:'rgba(236,224,198,0.24)',ls:'2px'});
+  const blueO={font:'600 '+midF+'px '+sans,color:'rgba(150,205,224,0.55)',ls:'4px'};
+  rlabel('NORTH BLUE',45,56,blueO); rlabel('EAST BLUE',140,56,blueO);
+  rlabel('WEST BLUE',45,-56,blueO); rlabel('SOUTH BLUE',128,-56,blueO);
+  const cbO={font:'600 '+smF+'px '+sans,color:'rgba(150,178,188,0.66)',ls:'5px'};
+  [45,135,225,315].forEach(lo=>{ rlabel('CALM BELT',lo,8.3,cbO); rlabel('CALM BELT',lo,-8.3,cbO); });
+  const redO={font:'600 '+smF+'px '+sans,color:'rgba(247,234,214,0.8)',ls:'5px',rot:-Math.PI/2};
+  [90,270].forEach(lo=>{ rlabel('RED LINE',lo,40,redO); rlabel('RED LINE',lo,-40,redO); });
+}
 
-document.getElementById('zin').onclick = () => setZoom(threeMap.camera.zoom * 1.35);
-document.getElementById('zout').onclick = () => setZoom(threeMap.camera.zoom / 1.35);
-document.getElementById('zhere').onclick = () => threeMap.focusIsland(positionIsland());
-document.getElementById('zfit').onclick = fit;
+// --- camera ---
+function fit(){ lam0=90*DEG; phi0=14*DEG; setZoom(1); }
+function flyTo(isle){ if(!isle) return; const {lon,lat}=lonlat(isle.x,isle.y); animateTo(lon,lat); }
+function animateTo(lon,lat){ cancelAnimationFrame(camAnim);
+  const l0=lam0,p0=phi0; let dl=lon-l0; while(dl>Math.PI)dl-=2*Math.PI; while(dl<-Math.PI)dl+=2*Math.PI;
+  const dp=clampPhi(lat)-p0, t0=performance.now();
+  const step=t=>{ let k=Math.min(1,(t-t0)/480); k=1-Math.pow(1-k,3); lam0=l0+dl*k; phi0=p0+dp*k; draw(); if(k<1) camAnim=requestAnimationFrame(step); };
+  camAnim=requestAnimationFrame(step); }
+
+// no-op stubs — the SVG builders are gone; the globe reads STOPS/ISLANDS live
+function buildRoute(){}
+function buildMarkers(){}
+function buildDetourLines(){}
+
+// --- interaction ---
+const ptrs=new Map(); let dragging=false,lastX,lastY,moved=0,vl=0,vp=0,pinchD=0;
+const pdist=()=>{ const a=[...ptrs.values()]; return Math.hypot(a[0].x-a[1].x, a[0].y-a[1].y); };
+const localXY=e=>{ const r=cvs.getBoundingClientRect(); return [e.clientX-r.left, e.clientY-r.top]; };
+cvs.addEventListener('pointerdown',e=>{ ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY}); cvs.setPointerCapture(e.pointerId); cancelAnimationFrame(camAnim); cvs.style.cursor='grabbing';
+  if(ptrs.size===1){ dragging=true; lastX=e.clientX; lastY=e.clientY; moved=0; vl=vp=0; } if(ptrs.size===2){ dragging=false; pinchD=pdist(); } });
+cvs.addEventListener('pointermove',e=>{
+  if(ptrs.size===0){ const [mx,my]=localXY(e); const h=hit(mx,my); cvs.style.cursor=h?'pointer':'grab';
+    const hid=h?h.id:null; if(hid!==hovered){ hovered=hid; draw(); } return; }
+  if(!ptrs.has(e.pointerId)) return; ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(ptrs.size===2){ const d=pdist(); if(pinchD>0) setZoom(zoom*d/pinchD); pinchD=d; return; }
+  if(dragging){ const dx=e.clientX-lastX, dy=e.clientY-lastY; lastX=e.clientX; lastY=e.clientY; moved+=Math.abs(dx)+Math.abs(dy);
+    const k=0.005/Math.sqrt(zoom); lam0-=dx*k; phi0=clampPhi(phi0+dy*k); vl=-dx*k; vp=dy*k; draw(); } });
+function endPtr(e){ const click=ptrs.size===1&&moved<6; ptrs.delete(e.pointerId); if(ptrs.size<2) pinchD=0;
+  if(ptrs.size===0){ dragging=false; const [mx,my]=localXY(e); cvs.style.cursor=hit(mx,my)?'pointer':'grab';
+    if(click){ const h=hit(mx,my); if(h) select(h.id,true); else deselect(); } else coast(); } }
+cvs.addEventListener('pointerup',endPtr);
+cvs.addEventListener('pointercancel',e=>{ ptrs.delete(e.pointerId); dragging=false; });
+cvs.addEventListener('wheel',e=>{ e.preventDefault(); setZoom(zoom*(e.deltaY<0?1.12:0.9)); },{passive:false});
+function coast(){ if(dragging) return; if(Math.abs(vl)<0.0003&&Math.abs(vp)<0.0003) return; lam0+=vl; phi0=clampPhi(phi0+vp); vl*=0.94; vp*=0.94; draw(); requestAnimationFrame(coast); }
+
+document.getElementById('zin').onclick   = () => setZoom(zoom*1.35);
+document.getElementById('zout').onclick  = () => setZoom(zoom/1.35);
+document.getElementById('zhere').onclick = () => { const h=byId[positionIsland()]; if(h) flyTo(h); };
+document.getElementById('zfit').onclick  = () => fit();
 
 new ResizeObserver(gresize).observe(stage);
 window.addEventListener('resize', gresize);
