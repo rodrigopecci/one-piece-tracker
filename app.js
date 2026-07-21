@@ -556,11 +556,14 @@ const ctx   = cvs.getContext('2d');
 const DPR   = Math.max(1, window.devicePixelRatio || 1);
 const DEG   = Math.PI/180, PHI_MAX = 82*DEG;
 
-// palette from the CSS custom properties, so the canvas matches the theme
-const _css = getComputedStyle(document.documentElement);
-const COL = {};
-['sea-deep','sea','sea-shallow','calm','grid','land','ink','brass','brass-lite','lacquer','voyage','filler','paper']
-  .forEach(k => { COL[k] = (_css.getPropertyValue('--'+k)||'').trim() || '#888'; });
+// palette — mirrors the CSS custom properties, hardcoded so the canvas never
+// depends on getComputedStyle (some browsers resolve custom props late, which
+// left every colour falling back to grey)
+const COL = {
+  'sea-deep':'#08202D', 'sea':'#0D3143', 'sea-shallow':'#15495F', 'calm':'#092836',
+  'grid':'#2C6E82', 'land':'#E9DCC0', 'ink':'#0B1A22', 'brass':'#D3A03C',
+  'brass-lite':'#F2D28E', 'lacquer':'#B03A2E', 'voyage':'#E0503F', 'filler':'#E3B341', 'paper':'#EFE6D2',
+};
 
 const lonlat   = (x,y) => ({ lon:(x/W)*2*Math.PI, lat:(1-2*y/H)*PHI_MAX });
 const clampPhi = p => Math.max(-Math.PI/2+0.03, Math.min(Math.PI/2-0.03, p));
