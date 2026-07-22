@@ -25,7 +25,11 @@ const COLORS = {
 
 const islandLongitudeOffsets = new Map([
   ['twin-cape', 6 * DEG],
-  ['loguetown', 7 * DEG]
+  ['loguetown', 7 * DEG],
+  // Fish-Man Island is canonically below the Red Line. Its surface beacon is
+  // moved just beyond the mountain silhouette so the submerged stop remains
+  // visible and clickable instead of being depth-occluded by the terrain.
+  ['fishman-island', 9.5 * DEG]
 ]);
 
 function seededRandom(seedText) {
@@ -104,7 +108,7 @@ function redLineTerrainRadius(sample, cross) {
 
 function islandAltitude(island) {
   if (island.type === 'sky') return 0.52;
-  if (island.type === 'undersea') return 0.035;
+  if (island.type === 'undersea') return 0.052;
   return 0.068;
 }
 
@@ -430,7 +434,9 @@ export class ThreeWorldMap {
       const baseColor = COLORS[island.type] || COLORS.island;
       const material = new THREE.MeshStandardMaterial({
         color:baseColor,roughness:0.86,metalness:0,side:THREE.DoubleSide,
-        transparent:island.type === 'undersea',opacity:island.type === 'undersea' ? 0.82 : 1
+        transparent:island.type === 'undersea',opacity:island.type === 'undersea' ? 0.92 : 1,
+        emissive:island.type === 'undersea' ? 0x123d49 : 0x000000,
+        emissiveIntensity:island.type === 'undersea' ? 0.58 : 0
       });
       const blob = new THREE.Mesh(islandShapeGeometry(island, size), material);
       orientTangent(blob, position, FORWARD);
@@ -461,8 +467,56 @@ export class ThreeWorldMap {
         this.islandGroup.add(cloud);
       }
 
+      let depthVisual = null;
+      if (island.type === 'undersea') {
+        const normal = position.clone().normalize();
+        depthVisual = new THREE.Group();
+
+        const bubble = new THREE.Mesh(
+          new THREE.SphereGeometry(size * 1.18, 18, 12),
+          new THREE.MeshBasicMaterial({
+            color:0x9ee8ef,transparent:true,opacity:0.2,
+            side:THREE.DoubleSide,depthWrite:false
+          })
+        );
+        bubble.position.copy(position).addScaledVector(normal, size * 0.06);
+        depthVisual.add(bubble);
+
+        const surfaceHalo = new THREE.Mesh(
+          new THREE.RingGeometry(size * 0.9, size * 1.13, 36),
+          new THREE.MeshBasicMaterial({
+            color:0x8bd8e4,transparent:true,opacity:0.78,
+            side:THREE.DoubleSide,depthWrite:false
+          })
+        );
+        orientTangent(surfaceHalo, position.clone().addScaledVector(normal, 0.012), FORWARD);
+        depthVisual.add(surfaceHalo);
+
+        const beacon = new THREE.Mesh(
+          new THREE.OctahedronGeometry(size * 0.28, 0),
+          new THREE.MeshStandardMaterial({
+            color:0xb7f0ee,emissive:0x2f9eb0,emissiveIntensity:1.1,
+            roughness:0.42,metalness:0.08
+          })
+        );
+        beacon.position.copy(position).addScaledVector(normal, size * 0.72);
+        depthVisual.add(beacon);
+
+        const depthAnchor = ordinaryIslandVector(island, GLOBE_RADIUS + 0.006);
+        const depthLine = createLine(
+          [depthAnchor, position.clone().addScaledVector(normal, size * 0.5)],
+          new THREE.LineDashedMaterial({
+            color:0xa4e6ec,transparent:true,opacity:0.62,
+            dashSize:0.018,gapSize:0.013,depthWrite:false
+          })
+        );
+        depthLine.computeLineDistances();
+        depthVisual.add(depthLine);
+        this.islandGroup.add(depthVisual);
+      }
+
       const pick = new THREE.Mesh(
-        new THREE.SphereGeometry(Math.max(0.095, size * 1.45), 10, 8),
+        new THREE.SphereGeometry(Math.max(island.type === 'undersea' ? 0.145 : 0.095, size * 1.45), 10, 8),
         new THREE.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false})
       );
       pick.position.copy(position);
@@ -480,14 +534,14 @@ export class ThreeWorldMap {
 
       const labelPosition = island.id === 'mary-geoise'
         ? redLineLandmarkVector({...island,y:island.y - 58}, 0.23)
-        : position.clone().addScaledVector(position.clone().normalize(), 0.07);
-      const label = this.addLabel(island.n, 'island ' + (island.major || island.type === 'landmark' ? 'major' : 'minor'), {
+        : position.clone().addScaledVector(position.clone().normalize(), island.type === 'undersea' ? 0.14 : 0.07);
+      const label = this.addLabel(island.n, 'island ' + (island.major || island.type === 'landmark' ? 'major' : 'minor') + (island.type === 'undersea' ? ' undersea' : ''), {
         position:labelPosition,
         priority:island.major || island.type === 'landmark' ? 2 : 4,
         minor:!island.major && island.type !== 'landmark',
         islandId:island.id
       });
-      this.markerRecords.set(island.id, {island,position,size,blob,peak,pick,material,progressRing,progressFraction:0,label});
+      this.markerRecords.set(island.id, {island,position,size,blob,peak,pick,material,depthVisual,progressRing,progressFraction:0,label});
     }
 
     this.selectionRing = new THREE.Mesh(
@@ -590,6 +644,7 @@ export class ThreeWorldMap {
         : record.island.type === 'filler' ? COLORS.filler
         : COLORS[record.island.type] || COLORS.island;
       record.blob.visible = record.peak.visible = record.pick.visible = !hiddenFiller;
+      if (record.depthVisual) record.depthVisual.visible = !hiddenFiller;
       record.material.color.setHex(color);
       record.label.element.textContent = shielded ? '???' : record.island.n;
       record.label.element.classList.toggle('sailed', status === 'sailed');
@@ -674,7 +729,7 @@ export class ThreeWorldMap {
       }
       const facing = entry.position.clone().normalize().dot(cameraDirection);
       const selected = entry.islandId && this.view.selectedId === entry.islandId;
-      const pinned = selected || entry.islandId === 'mary-geoise';
+      const pinned = selected || entry.islandId === 'mary-geoise' || record?.island.type === 'undersea';
       const status = entry.islandId ? this.view.statusById.get(entry.islandId) : null;
       const minorVisible = !entry.minor || this.camera.zoom > 1.75 || selected || status === 'here';
       if (facing < 0.12 || !minorVisible) {
