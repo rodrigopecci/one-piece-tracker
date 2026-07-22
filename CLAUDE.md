@@ -33,7 +33,9 @@ app.js                           all client-side logic (module script),
 three-world.js                   production Three.js globe renderer
 sync-progress.js                 pure cross-device reconciliation helpers
 map-art-lab.html +
-  map-art-lab.js                 isolated richer-cartography prototype; not
+  map-art-lab.js +
+  map-island-designs.js          isolated richer-cartography prototype and its
+                                 lore-driven island silhouette catalog; not
                                  loaded by the production tracker
 config.js                        Supabase URL + anon key (public-safe); optional
 flat.html + app-flat.js          frozen backup of the old 2D SVG map; deployed
@@ -93,6 +95,13 @@ The globe only shows one hemisphere at a time, so island positions are
 order and relative arrangement match op-maps, absolute spacing is squeezed. The
 old flat SVG map (infinite cylinder pan, `TILES`, `clampView`) is gone; it
 survives as a one-step backup at **`flat.html`** / **`app-flat.js`** (see Deploy).
+
+The additive **cartography lab** currently gives twenty-five major route
+landmarks distinct procedural silhouettes derived from the lore already stored
+in `CANON_ISLANDS`. Its metadata lives in `map-island-designs.js`; reusable
+terrain, climate, architecture, vegetation, cloud, and landmark primitives live
+in `map-art-lab.js`. Reverse Mountain's rivers are cut into the terrain, then
+widen, fade, and submerge as they meet the four Blues and the Grand Line.
 
 Island coordinates are an editorial reading. Oda never published them, fan maps
 disagree, and that is fine — but the *skeleton* above is not negotiable, and
