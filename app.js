@@ -244,8 +244,9 @@ const ARCS = [
   {saga:"Sky Island", id:"g8", n:"G-8", ep:[196,206], detour:true, spot:"Navarone"},
 
   {saga:"Water 7", id:"long-ring", n:"Long Ring Long Land", ep:[207,219], ch:[303,321], stops:["long-ring"], anime:[[213,216]]},
-  {saga:"Water 7", id:"oceans-dream", n:"Ocean's Dream", ep:[220,225], detour:true, spot:"Ocean's Dream"},
-  {saga:"Water 7", id:"water-7", n:"Water 7", ep:[226,263], ch:[322,374], stops:["water-7"], mixed:[226]},
+  {saga:"Water 7", id:"oceans-dream", n:"Ocean's Dream", ep:[220,224], detour:true, spot:"Ocean's Dream"},
+  {saga:"Water 7", id:"foxy-return", n:"Foxy's Return", ep:[225,226], detour:true, offRoute:true, noIsland:true},
+  {saga:"Water 7", id:"water-7", n:"Water 7", ep:[227,263], ch:[322,374], stops:["water-7"]},
   {saga:"Water 7", id:"enies-lobby", n:"Enies Lobby", ep:[264,312], ch:[375,430], stops:["enies-lobby"], filler:[[279,283],[291,292],303]},
   {saga:"Water 7", id:"post-enies", n:"Post-Enies Lobby", ep:[313,325], ch:[431,441], stops:["water-7"], filler:[[317,319]]},
 
@@ -375,7 +376,7 @@ function makeFillerIslands(){
   const out = [];
   let side = 1;
   ARCS.forEach((arc, idx) => {
-    if (!arc.detour) return;
+    if (!arc.detour || arc.noIsland) return;
     let prev = null, next = null;
     for (let i = idx-1; i >= 0; i--) if (ARCS[i].stops){ prev = ARCS[i].stops[ARCS[i].stops.length-1]; break; }
     for (let i = idx+1; i < ARCS.length; i++) if (ARCS[i].stops){ next = ARCS[i].stops[0]; break; }
@@ -1211,6 +1212,37 @@ const sailbtn = document.getElementById('sailbtn');
 const veil = document.getElementById('veil');
 const stopsAt = id => STOPS.filter(s => s.island===id && !s.pending);
 
+function renderIslandArcs(arcs, shielded){
+  const label = document.getElementById('pArcK');
+  const host = document.getElementById('pArc');
+  host.replaceChildren();
+  if (shielded){
+    label.textContent = 'Arc';
+    host.textContent = 'Hidden';
+    return;
+  }
+  const unique = [...new Map(arcs.filter(Boolean).map(arc => [arc.id, arc])).values()];
+  label.textContent = unique.length === 1 ? 'Arc' : 'Arcs';
+  if (!unique.length){
+    host.textContent = 'Not on the route';
+    return;
+  }
+  const rangeLabel = unitWordC();
+  unique.forEach(arc => {
+    const range = rangeOf(arc, medium());
+    const row = document.createElement('div');
+    row.className = 'meta-arc';
+    const name = document.createElement('span');
+    name.className = 'meta-arc-name';
+    name.textContent = arc.n;
+    const units = document.createElement('span');
+    units.className = 'meta-arc-range';
+    units.textContent = range ? `${rangeLabel} ${range[0]}–${range[1]}` : 'Not released';
+    row.append(name, units);
+    host.appendChild(row);
+  });
+}
+
 function select(id, fly){
   const isle = byId[id];
   if (!isle) return;
@@ -1225,13 +1257,8 @@ function select(id, fly){
   eyebrow.classList.toggle('fil', isFiller);
   document.getElementById('pName').textContent = shielded ? '???' : isle.n;
   document.getElementById('pSea').textContent = SEAS[isle.sea].label;
-  document.getElementById('pArc').textContent = shielded ? 'Hidden'
-    : isFiller ? arc.n
-    : mine.length ? [...new Set(mine.map(s=>s.arc.n))].join(', ') : 'Not on the route';
-  document.getElementById('pRangeK').textContent = unitWordC();
+  renderIslandArcs(isFiller ? [arc] : mine.map(stop => stop.arc), shielded);
   const units = isFiller ? unitsOf(arc,'anime') : mine.flatMap(s => s.units);
-  document.getElementById('pRange').textContent = shielded ? 'Hidden'
-    : units.length ? `${units[0]}–${units[units.length-1]}` : '—';
 
   veil.style.display = shielded ? '' : 'none';
   document.getElementById('pBlurb').style.display = shielded ? 'none' : '';

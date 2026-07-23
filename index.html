@@ -411,6 +411,12 @@
     border-bottom:1px solid rgba(211,160,60,.2);padding:13px 0;margin-bottom:14px;}
   .meta dt{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:rgba(239,230,210,.5);}
   .meta dd{margin:0;font-size:13px;}
+  .meta-arcs{display:grid;gap:8px;}
+  .meta-arc{display:grid;gap:2px;}
+  .meta-arc + .meta-arc{padding-top:8px;border-top:1px solid rgba(211,160,60,.13);}
+  .meta-arc-name{color:var(--paper);line-height:1.25;}
+  .meta-arc-range{font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;
+    color:rgba(239,230,210,.52);}
   .blurb{font-size:14px;line-height:1.62;color:rgba(239,230,210,.86);margin:0 0 14px;}
   .lore{font-size:12.5px;line-height:1.66;color:rgba(239,230,210,.6);margin:0 0 18px;padding-top:13px;
     border-top:1px solid rgba(211,160,60,.16);}
@@ -560,8 +566,7 @@
           <button class="sailbtn" id="sailbtn">Sail here</button>
           <dl class="meta">
             <dt>Sea</dt><dd id="pSea">—</dd>
-            <dt>Arc</dt><dd id="pArc">—</dd>
-            <dt id="pRangeK">Episodes</dt><dd id="pRange">—</dd>
+            <dt id="pArcK">Arc</dt><dd id="pArc" class="meta-arcs">—</dd>
           </dl>
           <div class="veil" id="veil" style="display:none">
             <p>You haven't reached this island yet. The chart keeps its secrets until you do.</p>
@@ -701,6 +706,6 @@
     }
   }
 </script>
-<script type="module" src="app.js?v=35"></script>
+<script type="module" src="app.js?v=36"></script>
 </body>
 </html>
