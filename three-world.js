@@ -580,17 +580,15 @@ export class ThreeWorldMap {
       progressRing.visible = false;
       this.world.add(progressRing);
 
-      const normal = position.clone().normalize();
       const labelPosition = island.id === 'mary-geoise'
-        ? position.clone()
-          .addScaledVector(normal, size * 1.8)
-          .addScaledVector(new THREE.Vector3().crossVectors(UP, normal).normalize(), size * 8)
-        : position.clone().addScaledVector(normal, island.type === 'undersea' ? 0.14 : 0.07);
+        ? position.clone().addScaledVector(position.clone().normalize(), size * 1.8)
+        : position.clone().addScaledVector(position.clone().normalize(), island.type === 'undersea' ? 0.14 : 0.07);
       const label = this.addLabel(island.n, 'island ' + (island.major || island.type === 'landmark' ? 'major' : 'minor') + (island.type === 'undersea' ? ' undersea' : '') + (island.type === 'sky' ? ' sky' : ''), {
         position:labelPosition,
         priority:island.major || island.type === 'landmark' ? 2 : 4,
         minor:!island.major && island.type !== 'landmark',
-        islandId:island.id
+        islandId:island.id,
+        screenOffsetY:isMaryGeoise ? -19 : 0
       });
       this.markerRecords.set(island.id, {island,position,size,blob,peak,pick,material,depthVisual,landmarkVisual,progressRing,progressFraction:0,label});
     }
@@ -613,6 +611,8 @@ export class ThreeWorldMap {
       position:options.position,
       priority:options.priority ?? 3,
       rotation:options.rotation || 0,
+      screenOffsetX:options.screenOffsetX || 0,
+      screenOffsetY:options.screenOffsetY || 0,
       minor:Boolean(options.minor),
       region:Boolean(options.region),
       islandId:options.islandId || null
@@ -794,8 +794,8 @@ export class ThreeWorldMap {
         continue;
       }
       const projected = entry.position.clone().project(this.camera);
-      const x = (projected.x * 0.5 + 0.5) * width;
-      const y = (-projected.y * 0.5 + 0.5) * height;
+      const x = (projected.x * 0.5 + 0.5) * width + entry.screenOffsetX;
+      const y = (-projected.y * 0.5 + 0.5) * height + entry.screenOffsetY;
       const textWidth = entry.region ? Math.max(76, entry.element.textContent.length * 10) : entry.element.textContent.length * 6.1 + 12;
       const textHeight = entry.region ? 24 : 16;
       candidates.push({entry,x,y,selected,pinned,box:{left:x-textWidth/2,right:x+textWidth/2,top:y-textHeight/2,bottom:y+textHeight/2}});
