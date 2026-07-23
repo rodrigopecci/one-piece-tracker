@@ -729,11 +729,13 @@ function renderQuickLog(){
   const med = medium();
   const u = nextUnitToMark(med);
   const V = document.getElementById('qlogV'), C = document.getElementById('qlogC');
-  const K = document.getElementById('qlogK'), mark = document.getElementById('qlogMark');
+  const K = document.getElementById('qlogK'), T = document.getElementById('qlogT');
+  const mark = document.getElementById('qlogMark');
   if (u === null){
     qlog.classList.add('done');
     K.textContent = 'All caught up';
     V.textContent = medium()==='anime' ? 'Every episode' : 'Every chapter';
+    T.textContent = '';
     C.textContent = 'Nothing left to mark';
     mark.disabled = true;
     mark.textContent = '✓ Caught up';
@@ -750,7 +752,7 @@ function renderQuickLog(){
   // only shows with the shield off. Lazy-load its block, then re-render.
   ensureContent(med, u, u, renderQuickLog);
   const info = unitInfo(med, u);
-  document.getElementById('qlogT').textContent = (info && unitRevealed(med, u)) ? info.t : '';
+  T.textContent = (info && unitRevealed(med, u)) ? info.t : '';
   C.textContent = shielded || !arc ? 'Uncharted waters ahead' : arc.n;   // arc only — no duplicate island name
   mark.disabled = false;
   mark.textContent = med === 'anime' ? '✓ Mark watched' : '✓ Mark as read';
