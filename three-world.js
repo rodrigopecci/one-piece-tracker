@@ -125,7 +125,7 @@ function redLineLandmarkVector(island, clearance) {
 
 function islandVector(island) {
   if (island.id === 'reverse-mountain') return redLineLandmarkVector(island, 0.012);
-  if (island.id === 'mary-geoise') return redLineLandmarkVector(island, 0.14);
+  if (island.id === 'mary-geoise') return redLineLandmarkVector(island, 0.012);
   return ordinaryIslandVector(island);
 }
 
@@ -303,6 +303,47 @@ function islandShapeGeometry(island, size) {
   return new THREE.ShapeGeometry(shape, 2);
 }
 
+function maryGeoiseConstruction(position, size) {
+  const group = new THREE.Group();
+  orientTangent(group, position, UP);
+  size *= 1.85;
+  const stone = new THREE.MeshStandardMaterial({color:0xd7cfb8,roughness:0.82,metalness:0});
+  const pale = new THREE.MeshStandardMaterial({color:0xeee5ce,roughness:0.72,metalness:0});
+  const roof = new THREE.MeshStandardMaterial({color:0xb99a56,roughness:0.62,metalness:0.18});
+  const garden = new THREE.MeshStandardMaterial({color:0x71824b,roughness:0.94,metalness:0});
+
+  const foundation = new THREE.Mesh(new THREE.BoxGeometry(size * 2.5, size * 0.36, size * 1.3), stone);
+  foundation.position.y = size * 0.16;group.add(foundation);
+
+  for (let tier = 0; tier < 3; tier += 1) {
+    const terrace = new THREE.Mesh(
+      new THREE.BoxGeometry(size * (2.05 - tier * 0.35), size * 0.2, size * (1.15 - tier * 0.16)),
+      tier === 2 ? pale : stone
+    );
+    terrace.position.y = size * (0.4 + tier * 0.2);group.add(terrace);
+  }
+
+  const palace = new THREE.Mesh(new THREE.BoxGeometry(size * 0.92, size * 0.82, size * 0.62), pale);
+  palace.position.y = size * 1.16;group.add(palace);
+  const palaceRoof = new THREE.Mesh(new THREE.ConeGeometry(size * 0.62, size * 0.34, 4), roof);
+  palaceRoof.position.y = size * 1.74;palaceRoof.rotation.y = Math.PI / 4;group.add(palaceRoof);
+
+  for (const x of [-0.72, 0.72]) {
+    const tower = new THREE.Mesh(new THREE.CylinderGeometry(size * 0.16, size * 0.21, size * 0.9, 8), pale);
+    tower.position.set(size * x, size * 1.08, 0);group.add(tower);
+    const towerRoof = new THREE.Mesh(new THREE.ConeGeometry(size * 0.29, size * 0.35, 8), roof);
+    towerRoof.position.set(size * x, size * 1.7, 0);group.add(towerRoof);
+  }
+
+  const avenue = new THREE.Mesh(new THREE.BoxGeometry(size * 0.3, size * 0.055, size * 1.35), pale);
+  avenue.position.set(0, size * 0.72, size * 0.62);group.add(avenue);
+  for (const x of [-0.62, 0.62]) {
+    const trees = new THREE.Mesh(new THREE.SphereGeometry(size * 0.2, 9, 6), garden);
+    trees.scale.set(1, 0.65, 1.8);trees.position.set(size * x, size * 0.86, size * 0.34);group.add(trees);
+  }
+  return group;
+}
+
 function boxesOverlap(a, b) {
   return a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
 }
@@ -431,6 +472,7 @@ export class ThreeWorldMap {
     for (const island of this.islands) {
       const size = island.major ? 0.092 : island.type === 'filler' ? 0.07 : 0.059;
       const position = islandVector(island);
+      const isMaryGeoise = island.id === 'mary-geoise';
       const baseColor = COLORS[island.type] || COLORS.island;
       const material = new THREE.MeshStandardMaterial({
         color:baseColor,roughness:0.86,metalness:0,side:THREE.DoubleSide,
@@ -438,14 +480,17 @@ export class ThreeWorldMap {
         emissive:island.type === 'undersea' ? 0x123d49 : 0x000000,
         emissiveIntensity:island.type === 'undersea' ? 0.58 : 0
       });
-      const blob = new THREE.Mesh(islandShapeGeometry(island, size), material);
+      const blob = isMaryGeoise ? new THREE.Group() : new THREE.Mesh(islandShapeGeometry(island, size), material);
       orientTangent(blob, position, FORWARD);
       blob.userData.island = island;
       this.islandGroup.add(blob);
 
-      const peak = new THREE.Mesh(new THREE.ConeGeometry(size * 0.34, size * 0.36, island.major ? 7 : 5), material);
-      orientTangent(peak, position.clone().addScaledVector(position.clone().normalize(), size * 0.14), UP);
+      const peak = isMaryGeoise ? new THREE.Group() : new THREE.Mesh(new THREE.ConeGeometry(size * 0.34, size * 0.36, island.major ? 7 : 5), material);
+      orientTangent(peak, position.clone().addScaledVector(position.clone().normalize(), isMaryGeoise ? 0 : size * 0.14), UP);
       this.islandGroup.add(peak);
+
+      const landmarkVisual = isMaryGeoise ? maryGeoiseConstruction(position, size) : null;
+      if (landmarkVisual) this.islandGroup.add(landmarkVisual);
 
       if (island.type === 'sky') {
         const normal = position.clone().normalize();
@@ -516,7 +561,10 @@ export class ThreeWorldMap {
       }
 
       const pick = new THREE.Mesh(
-        new THREE.SphereGeometry(Math.max(island.type === 'undersea' ? 0.145 : 0.095, size * 1.45), 10, 8),
+        new THREE.SphereGeometry(Math.max(
+          island.type === 'undersea' ? 0.145 : isMaryGeoise ? 0.19 : 0.095,
+          size * 1.45
+        ), 10, 8),
         new THREE.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false})
       );
       pick.position.copy(position);
@@ -532,16 +580,19 @@ export class ThreeWorldMap {
       progressRing.visible = false;
       this.world.add(progressRing);
 
+      const normal = position.clone().normalize();
       const labelPosition = island.id === 'mary-geoise'
-        ? redLineLandmarkVector({...island,y:island.y - 58}, 0.23)
-        : position.clone().addScaledVector(position.clone().normalize(), island.type === 'undersea' ? 0.14 : 0.07);
-      const label = this.addLabel(island.n, 'island ' + (island.major || island.type === 'landmark' ? 'major' : 'minor') + (island.type === 'undersea' ? ' undersea' : ''), {
+        ? position.clone()
+          .addScaledVector(normal, size * 1.8)
+          .addScaledVector(new THREE.Vector3().crossVectors(UP, normal).normalize(), size * 8)
+        : position.clone().addScaledVector(normal, island.type === 'undersea' ? 0.14 : 0.07);
+      const label = this.addLabel(island.n, 'island ' + (island.major || island.type === 'landmark' ? 'major' : 'minor') + (island.type === 'undersea' ? ' undersea' : '') + (island.type === 'sky' ? ' sky' : ''), {
         position:labelPosition,
         priority:island.major || island.type === 'landmark' ? 2 : 4,
         minor:!island.major && island.type !== 'landmark',
         islandId:island.id
       });
-      this.markerRecords.set(island.id, {island,position,size,blob,peak,pick,material,depthVisual,progressRing,progressFraction:0,label});
+      this.markerRecords.set(island.id, {island,position,size,blob,peak,pick,material,depthVisual,landmarkVisual,progressRing,progressFraction:0,label});
     }
 
     this.selectionRing = new THREE.Mesh(
@@ -645,6 +696,7 @@ export class ThreeWorldMap {
         : COLORS[record.island.type] || COLORS.island;
       record.blob.visible = record.peak.visible = record.pick.visible = !hiddenFiller;
       if (record.depthVisual) record.depthVisual.visible = !hiddenFiller;
+      if (record.landmarkVisual) record.landmarkVisual.visible = !hiddenFiller;
       record.material.color.setHex(color);
       record.label.element.textContent = shielded ? '???' : record.island.n;
       record.label.element.classList.toggle('sailed', status === 'sailed');
@@ -653,6 +705,7 @@ export class ThreeWorldMap {
       const selected = view.selectedId === id;
       record.blob.scale.setScalar(selected ? 1.22 : 1);
       record.peak.scale.setScalar(selected ? 1.18 : 1);
+      if (record.landmarkVisual) record.landmarkVisual.scale.setScalar(selected ? 1.08 : 1);
       const fraction = view.progressById.get(id) || 0;
       if (fraction > 0 && fraction < 1 && Math.abs(fraction - record.progressFraction) > 0.001) {
         record.progressRing.geometry.dispose();
@@ -665,7 +718,11 @@ export class ThreeWorldMap {
     const selected = view.selectedId && this.markerRecords.get(view.selectedId);
     if (selected) {
       orientTangent(this.selectionRing, selected.position.clone().multiplyScalar(1.008), FORWARD);
-      this.selectionRing.scale.setScalar(selected.island.major || selected.island.type === 'landmark' ? 1.14 : 0.88);
+      this.selectionRing.scale.setScalar(
+        selected.island.id === 'mary-geoise' ? 1.8
+          : selected.island.major || selected.island.type === 'landmark' ? 1.14
+          : 0.88
+      );
       this.selectionRing.visible = true;
     } else this.selectionRing.visible = false;
 
@@ -729,7 +786,7 @@ export class ThreeWorldMap {
       }
       const facing = entry.position.clone().normalize().dot(cameraDirection);
       const selected = entry.islandId && this.view.selectedId === entry.islandId;
-      const pinned = selected || entry.islandId === 'mary-geoise' || record?.island.type === 'undersea';
+      const pinned = selected || entry.islandId === 'mary-geoise' || record?.island.type === 'undersea' || record?.island.type === 'sky';
       const status = entry.islandId ? this.view.statusById.get(entry.islandId) : null;
       const minorVisible = !entry.minor || this.camera.zoom > 1.75 || selected || status === 'here';
       if (facing < 0.12 || !minorVisible) {
