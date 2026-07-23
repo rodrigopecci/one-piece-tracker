@@ -9,6 +9,10 @@ const FORWARD = new THREE.Vector3(0, 0, 1);
 const ORIGIN = new THREE.Vector3();
 const WORLD_WIDTH = 4000;
 const WORLD_HEIGHT = 2400;
+const GRAND_LINE_EDGE_LAT = 6.5;
+const CALM_BELT_INNER_LAT = 6.8;
+const CALM_BELT_OUTER_LAT = 17.8;
+const CALM_BELT_LABEL_LAT = (CALM_BELT_INNER_LAT + CALM_BELT_OUTER_LAT) / 2;
 
 const COLORS = {
   island:0xaeba66,
@@ -442,9 +446,9 @@ export class ThreeWorldMap {
       );
       this.bandGroup.add(mesh);
     };
-    addBand(-11.8, -6.7, 0x04141d, 0.82, 0.022);
-    addBand(6.7, 11.8, 0x04141d, 0.82, 0.022);
-    addBand(-6.5, 6.5, 0x73b7c9, 0.34, 0.028);
+    addBand(-CALM_BELT_OUTER_LAT, -CALM_BELT_INNER_LAT, 0x04141d, 0.82, 0.022);
+    addBand(CALM_BELT_INNER_LAT, CALM_BELT_OUTER_LAT, 0x04141d, 0.82, 0.022);
+    addBand(-GRAND_LINE_EDGE_LAT, GRAND_LINE_EDGE_LAT, 0x73b7c9, 0.34, 0.028);
     addBand(-0.7, 0.7, 0xb4dce3, 0.22, 0.034);
 
     this.bandGroup.add(new THREE.Mesh(
@@ -633,8 +637,8 @@ export class ThreeWorldMap {
     region('PARADISE',104,4.35,'zone',{priority:1});
     region('NEW WORLD',284,4.35,'zone',{priority:1});
     for (const lon of [45,135,225,315]) {
-      region('CALM BELT',lon,9.2,'band',{priority:1});
-      region('CALM BELT',lon,-9.2,'band',{priority:1});
+      region('CALM BELT',lon,CALM_BELT_LABEL_LAT,'band',{priority:1});
+      region('CALM BELT',lon,-CALM_BELT_LABEL_LAT,'band',{priority:1});
     }
     for (const lon of [90,270]) {
       region('RED LINE',lon,40,'redline',{priority:1,rotation:-90,altitude:0.29});
@@ -786,9 +790,10 @@ export class ThreeWorldMap {
       }
       const facing = entry.position.clone().normalize().dot(cameraDirection);
       const selected = entry.islandId && this.view.selectedId === entry.islandId;
-      const pinned = selected || entry.islandId === 'mary-geoise' || record?.island.type === 'undersea' || record?.island.type === 'sky';
+      const pinned = selected || entry.islandId === 'mary-geoise' || record?.island.sea === 'calm'
+        || record?.island.type === 'undersea' || record?.island.type === 'sky';
       const status = entry.islandId ? this.view.statusById.get(entry.islandId) : null;
-      const minorVisible = !entry.minor || this.camera.zoom > 1.75 || selected || status === 'here';
+      const minorVisible = !entry.minor || this.camera.zoom > 1.75 || selected || status === 'here' || pinned;
       if (facing < 0.12 || !minorVisible) {
         entry.element.classList.remove('visible');
         continue;

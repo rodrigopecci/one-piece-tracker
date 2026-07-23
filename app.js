@@ -8,7 +8,7 @@
    ============================================================ */
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { SUPABASE_URL, SUPABASE_ANON_KEY, supabaseConfigured } from './config.js';
-import { ThreeWorldMap } from './three-world.js?v=5';
+import { ThreeWorldMap } from './three-world.js?v=7';
 import { mergeProgressState, pruneChangeMap, setsEqual } from './sync-progress.js?v=1';
 
 const supabase = supabaseConfigured
@@ -19,16 +19,16 @@ const supabase = supabaseConfigured
    THE WORLD
    ============================================================ */
 const W = 4000, H = 2400;
-const GL_Y = 1200, GL_HALF = 105, BELT = 210;
+const GL_Y = 1200, GL_HALF = 105, BELT = 160;
 const RL_A = 1000, RL_B = 3000, RL_HALF = 72;
 
 /* The chart is a stack of horizontal zones, and every island belongs to
    exactly one of them:
-     North & West Blue   above the upper Calm Belt
-     Calm Belt           dead water. Only Amazon Lily and Impel Down live here.
+     North & East Blue   above the upper Calm Belt
+     Calm Belt           dead water. Amazon Lily, Rusukaina and Impel Down are here.
      the Grand Line      a corridor, 210 units wide. You cannot leave it.
      Calm Belt
-     East & South Blue   below the lower Calm Belt                              */
+     West & South Blue   below the lower Calm Belt                              */
 const GL_TOP = GL_Y - GL_HALF, GL_BOT = GL_Y + GL_HALF;
 const NORTH_EDGE = GL_TOP - BELT, SOUTH_EDGE = GL_BOT + BELT;
 
@@ -72,13 +72,13 @@ const CANON_ISLANDS = [
   {id:'sabaody', n:'Sabaody Archipelago', x:2880, y:1120, sea:'paradise', type:'island', major:true,
    b:'A grove of mangroves that breathe bubbles. The last stop before the Red Line — and a slave market.',
    lore:'Not one island but a grove of giant mangroves leaking coating-bubbles, the lawless threshold of the Red Line. Beneath its amusement-park surface runs an infamous human auction.'},
-  {id:'amazon-lily', n:'Amazon Lily', x:2650, y:1400, sea:'paradise', type:'island', major:true,
+  {id:'amazon-lily', n:'Amazon Lily', x:2650, y:1400, sea:'calm', type:'island', major:true,
    b:'Hidden in the Calm Belt, in the Sea Kings’ nursery. An island of women; men are not permitted.',
    lore:'The secret home of the Kuja, a tribe of warrior women deep in the Calm Belt. No man may set foot there and live — which makes it the last place in the world anyone would think to look for one.'},
-  {id:'impel-down', n:'Impel Down', x:2800, y:1450, sea:'paradise', type:'undersea', major:true,
+  {id:'impel-down', n:'Impel Down', x:2800, y:1430, sea:'calm', type:'undersea', major:true,
    b:'The great prison beneath the sea, six levels deep. Officially, nobody has ever escaped.',
    lore:'The World Government’s underwater fortress, six descending levels each crueller than the last, from Crimson Hell to the frozen floor at the bottom. Its warden boasts of a flawless record.'},
-  {id:'marineford', n:'Marineford', x:2900, y:1288, sea:'paradise', type:'island', major:true,
+  {id:'marineford', n:'Marineford', x:2900, y:1240, sea:'paradise', type:'island', major:true,
    b:'Marine Headquarters, in the shadow of the Red Line. A fortified bay built to hold a war.',
    lore:'The Marine stronghold facing the holy land across the water, a fortress-town inside a walled bay. When the balance of the world is threatened, every admiral and warship converges here.'},
   {id:'mary-geoise', n:'Mary Geoise', x:3000, y:1120, sea:'paradise', type:'landmark', major:true,
@@ -115,19 +115,19 @@ const CANON_ISLANDS = [
    b:'The village of the giants, where disputes are settled by combat and the god of war is watching.',
    lore:'The fabled warrior nation of the giants, where every quarrel is laid before Elbaf’s god of war and settled by strength alone. To smaller folk it is a name out of childhood stories.'},
 
-  {id:'rusukaina', n:'Rusukaina', x:2540, y:1440, sea:'paradise', type:'island',
+  {id:'rusukaina', n:'Rusukaina', x:2540, y:1440, sea:'calm', type:'island',
    b:'A brutal, uninhabited island near Amazon Lily — the empty kingdom where only the strong survive.',
    lore:'No people live here, only five hundred beasts fiercer than any human, across an island of forty-eight shifting seasons. It is where a warrior goes to be broken down and rebuilt, with nothing to lean on but themselves.'},
-  {id:'boin', n:'Boin Archipelago', x:1300, y:1520, sea:'paradise', type:'island',
-   b:'A lush paradise in the Calm Belt that welcomes you with endless food — and quietly never lets you leave.',
+  {id:'boin', n:'Boin Archipelago', x:1300, y:1205, sea:'paradise', type:'island',
+   b:'A lush archipelago in Paradise that welcomes you with endless food — and quietly never lets you leave.',
    lore:'The whole archipelago is one enormous carnivorous ecosystem. It feeds its visitors, fattens them, and lets its ravenous plants and beasts do the rest. Idyllic, abundant, and a slow trap.'},
-  {id:'kuraigana', n:'Kuraigana Island', x:2620, y:1560, sea:'paradise', type:'island', major:true,
+  {id:'kuraigana', n:'Kuraigana Island', x:2550, y:1198, sea:'paradise', type:'island', major:true,
    b:'A gloomy, overgrown island in the ruins of a lost kingdom, wrapped in perpetual dusk.',
    lore:'The abandoned Shikkearu Kingdom, swallowed by forest and by humandrills that learned to fight from the swordsmen they once watched. The greatest swordsman in the world keeps a castle here, alone but for the graves.'},
-  {id:'namakura', n:'Namakura Island', x:2120, y:1500, sea:'paradise', type:'island',
+  {id:'namakura', n:'Namakura Island', x:2260, y:1218, sea:'paradise', type:'island',
    b:'An island in the Grand Line’s grimmest reaches, where hunger is the daily occupation.',
    lore:'Part of the Harahettania waters, a region of near-perpetual want where the long-armed and long-legged tribes scrape by. A hard place to be shipwrecked — and a harder place to leave.'},
-  {id:'kamabakka', n:'Kamabakka Kingdom', x:2450, y:1005, sea:'paradise', type:'island',
+  {id:'kamabakka', n:'Kamabakka Kingdom', x:2740, y:1250, sea:'paradise', type:'island',
    b:'The kingdom of the okama on Momoiro Island — a riot of colour, cooking and attitude.',
    lore:'A nation devoted to living exactly as one pleases, where the New Kama Kenpo is a genuine martial art. Its flamboyant queen is also one of the Revolutionary Army’s most formidable commanders.'},
 
@@ -185,16 +185,35 @@ const CANON_ISLANDS = [
    b:'A South Blue island of enormous birds and the tiny people who ride them, above a jungle of beasts.',
    lore:'Its people live high in a single giant tree, safe from the monstrous animals prowling the jungle floor, hunting and travelling on the backs of great birds. Outsiders seldom arrive, and seldom leave unchanged.'},
 
-  {id:'baltigo', n:'Baltigo', x:110, y:1470, sea:'newworld', type:'island', major:true,
+  {id:'baltigo', n:'Baltigo', x:80, y:1250, sea:'newworld', type:'island', major:true,
    b:'A windswept island of white earth, hidden in the New World — the base of those who defy the world itself.',
    lore:'The stronghold of the Revolutionary Army, who wage their war not on pirates but on the world’s rulers, toppling tyrant kingdoms from the shadows. Their leader is among the most wanted men alive.'},
-  {id:'hachinosu', n:'Hachinosu', x:330, y:1480, sea:'newworld', type:'island', major:true,
+  {id:'hachinosu', n:'Hachinosu', x:300, y:1120, sea:'newworld', type:'island', major:true,
    b:'The pirates’ island: a lawless free port in the New World where the hunted hide and the desperate deal.',
    lore:'A haven built on the sea by outlaws and ruled by one of the four Emperors. Bounties mean nothing here but a price — on this island everything, and everyone, is for sale.'},
-  {id:'sphinx', n:'Sphinx', x:250, y:1055, sea:'newworld', type:'island',
+  {id:'sphinx', n:'Sphinx', x:610, y:1160, sea:'newworld', type:'island',
    b:'A small, peaceful island in the New World, fiercely watched over by the crew that calls it home.',
    lore:'The birthplace of the strongest man the seas have known. Long after his story ended, the quiet island he came from is still guarded by those who once sailed under his flag.'},
 ];
+
+/* Keep authored coordinates consistent with the bands drawn by Three.js.
+   Sky islands are intentionally exempt because their map latitude describes
+   the sea below them rather than the altitude at which they are rendered. */
+(() => {
+  const zoneAt = y => y < NORTH_EDGE ? 'north'
+    : y < GL_TOP ? 'calm'
+    : y <= GL_BOT ? 'grand-line'
+    : y <= SOUTH_EDGE ? 'calm'
+    : 'south';
+  const expectedZone = island => island.sea === 'calm' ? 'calm'
+    : island.sea === 'paradise' || island.sea === 'newworld' ? 'grand-line'
+    : island.sea === 'north' || island.sea === 'east' ? 'north'
+    : 'south';
+  const misplaced = CANON_ISLANDS.filter(island =>
+    island.type !== 'sky' && zoneAt(island.y) !== expectedZone(island));
+  if (misplaced.length)
+    throw new Error(`islands outside their chart region: ${misplaced.map(island => island.id).join(', ')}`);
+})();
 
 /* ============================================================
    ARCS — the single source of truth for episodes, chapters, and how they
@@ -351,6 +370,7 @@ const crewByArc = Object.fromEntries(CREW.filter(c => c.arc).map(c => [c.arc, c]
 
 const SEAS = {east:{label:'East Blue',short:'East'}, west:{label:'West Blue',short:'West'},
   north:{label:'North Blue',short:'North'}, south:{label:'South Blue',short:'South'},
+  calm:{label:'Calm Belt',short:'Calm Belt'},
   paradise:{label:'Grand Line — Paradise',short:'Paradise'},
   newworld:{label:'Grand Line — New World',short:'New World'}};
 const TETHERS = [['skypiea','jaya']];
